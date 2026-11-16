@@ -16,7 +16,7 @@ static func execute(query: ParsedQuery, store: EventStore) -> QueryResult:
 
 	var matches: Array[EventRecord] = []
 	for event: EventRecord in events:
-		if event.source != query.source:
+		if not query.source.is_empty() and event.source != query.source:
 			continue
 		if query.after_tick >= 0 and event.tick < query.after_tick:
 			continue

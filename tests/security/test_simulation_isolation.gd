@@ -19,6 +19,7 @@ const FORBIDDEN: Array = [
 	["^\\s*extends\\s+(Node\\w*|Control|CanvasItem|Window|Viewport)\\b", "presentation base class"],
 	["\\b(Palette|UiTheme|DialogueBox|ModalDialog|EventBus|Saves|Profiles|Settings|Scenes|Diagnostics)\\b", "presentation or service dependency"],
 	["\\bpush_(error|warning)\\(|\\bprint(_rich)?\\(", "simulation reports through results, not the console"],
+	["\\.(call|callv|call_deferred|bind|bindv|unbind)\\(|\\bCallable\\b|\\b(set_script|get_script)\\(|\\bClassDB\\b|\\bEngine\\.|\\bJavaScriptBridge\\b|\\bGDExtension\\w*", "dynamic dispatch or reflection"],
 ]
 
 
@@ -70,6 +71,10 @@ func test_the_scanner_itself_catches_violations() -> void:
 		"extends Control": 8,
 		"Saves.save_slot(0, {})": 9,
 		"print(\"debug\")": 10,
+		"handler.call(text)": 11,
+		"var c: Callable = Callable(self, name)": 11,
+		"obj.set_script(s)": 11,
+		"ClassDB.instantiate(name)": 11,
 	}
 	for sample: String in samples:
 		var regex: RegEx = RegEx.new()
