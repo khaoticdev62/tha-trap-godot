@@ -5,6 +5,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- Phase 1 audit documents (`docs/audits`, `docs/architecture`, `docs/production`) and the production specs under version control in `docs/spec/` (decisions D-008 to D-013 recorded in `00`).
+- Local pre-push test gate (`tools/hooks/pre-push`, `tools/install-hooks.ps1`) as a stand-in for CI.
+- Credential-free export presets for Windows and Linux x86_64 (`export_presets.cfg`, no longer git-ignored; verified to load and pack resources with Godot 4.7.2; full export needs export templates, not yet tested).
 - License: Apache-2.0 for code (`LICENSE`, `NOTICE`); creative content and names stay all rights reserved (`LICENSES.md`).
 - Phase 1 foundation: Godot 4.7 project (GL Compatibility renderer, 1280x800 base), boot flow, EventBus, SceneFlow with an id registry, SaveService (atomic writes, verification, rotating backups, checksums, schema migrations, corruption recovery), PlayerProfile with strict sanitising, local redacting diagnostics, controller-complete input actions, and a functional title screen (Continue / New Game / Quit).
 - UI foundation: palette-driven global Theme (scalable text 75-200%, high-contrast scheme, thick shape-based focus rings), persisted AccessibilitySettings (`user://settings.json`, atomic writes, corrupt files fall back to defaults), `motion_duration()` for reduced motion, and a working Settings screen reachable from the title screen (ui_cancel / B goes back).
@@ -15,6 +18,7 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 - Headless unit test runner and a title-screen integration test (`tools/run-tests.ps1`), with a per-scene timeout.
 
 ### Changed
+- CI runner pinned to `ubuntu-24.04`.
 - EventBus signals annotated `unused_signal` (they are emitted by forwarding in AppBootstrap); a debug run now reports zero engine warnings.
 - Visual review (real renders via `tools/visual/capture.tscn`) found and fixed: modal and dialogue box mis-positioned (anchors without offsets), Settings/Title not scrollable at large text, invisible slider track, unstyled text fields and dropdown popups, toggle state shown only by a tiny icon (now "On/Off" in the label), pillarboxing at 16:9 (stretch aspect is now `expand`), and screens ignoring the high-contrast page colour (`PageBackground`).
 - New Game now goes through the character creator; the profile is written only when the creator finishes, so backing out never destroys an existing save.

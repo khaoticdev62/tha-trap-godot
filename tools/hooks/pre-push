@@ -1,0 +1,15 @@
+#!/bin/sh
+# Local test gate: blocks a push when the unit or integration tests fail.
+# Stands in for CI while GitHub Actions is unavailable. Install with
+#   tools\install-hooks.ps1
+# Bypass deliberately with: git push --no-verify
+root="$(git rev-parse --show-toplevel)"
+echo "pre-push: running tests (tools/run-tests.ps1)..."
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$root/tools/run-tests.ps1"
+status=$?
+if [ "$status" -ne 0 ]; then
+    echo "pre-push: tests FAILED, push blocked."
+    exit 1
+fi
+echo "pre-push: tests passed."
+exit 0

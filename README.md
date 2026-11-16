@@ -2,7 +2,7 @@
 
 A single-player, story-driven cybersecurity career RPG built in Godot 4. Learn. Defend. Level Up.
 
-**Status:** Phase 1 (Foundation) in progress. Boots to a working title screen with save/load, an accessibility Settings screen and a character creator, and the dialogue box component (not yet used by a story scene). There is no world, campaign or lab yet. See the production specs (`00`–`10` Markdown files in the parent folder) for the full design.
+**Status:** Phase 1 (Foundation) in progress. Boots to a working title screen with save/load, an accessibility Settings screen and a character creator, and the dialogue box component (not yet used by a story scene). There is no world, campaign or lab yet. See the production specs in `docs/spec/` (`00`–`10`) for the full design and `docs/audits`, `docs/architecture`, `docs/production` for the Phase 1 audit and plan.
 
 ## Requirements
 - Godot 4.7.2 stable (standard build, not .NET). Pinned for reproducibility; bump deliberately.
@@ -16,6 +16,8 @@ tools\run-tests.ps1 save_service    # only test files whose name contains the fi
 Headless runs draw nothing, so UI changes need eyes: `godot --path . res://tools/visual/capture.tscn -- --out=<dir>` opens a real window and saves PNGs of every screen at 1280x800, 1280x720, 200% text and high contrast. Look at them before calling UI work done.
 
 Optional: the community [godot-mcp](https://github.com/Coding-Solo/godot-mcp) server lets an AI assistant launch the editor, run the game in a real window and read debug output (it opens windows by default; it cannot take screenshots, so keep using the capture tool). Setup, once per machine: `claude mcp add godot -e GODOT_PATH=<path to Godot exe> -- npx -y @coding-solo/godot-mcp`, then restart the session. Checked working with Godot 4.7.2 and server v0.1.0; it is a third-party npm package, so review before trusting it on other machines.
+
+Local test gate: run `tools\install-hooks.ps1` once; `git push` then runs the full suite first (GitHub Actions is currently unavailable). Bypass with `--no-verify` only on purpose.
 
 `tools/run-tests.ps1` finds Godot via `$env:GODOT`, then `PATH`, then `~\tools\godot`.
 
