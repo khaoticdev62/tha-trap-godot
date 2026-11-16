@@ -8,6 +8,8 @@ var id: String = ""
 var events: Array[EventRecord] = []
 var assets: Array[Dictionary] = []
 var identities: Array[Dictionary] = []
+var response_options: Array[Dictionary] = []
+var escalation_options: Array[Dictionary] = []
 var noise: Dictionary = {}
 
 
@@ -23,8 +25,28 @@ static func from_document(document: Dictionary) -> ScenarioPackage:
 	for raw: Variant in document.get("identities", []):
 		if typeof(raw) == TYPE_DICTIONARY:
 			package.identities.append((raw as Dictionary).duplicate(true))
+	for raw: Variant in document.get("response_options", []):
+		if typeof(raw) == TYPE_DICTIONARY:
+			package.response_options.append((raw as Dictionary).duplicate(true))
+	for raw: Variant in document.get("escalation_options", []):
+		if typeof(raw) == TYPE_DICTIONARY:
+			package.escalation_options.append((raw as Dictionary).duplicate(true))
 	var noise_value: Variant = document.get("noise", {})
 	if typeof(noise_value) == TYPE_DICTIONARY:
 		package.noise = (noise_value as Dictionary).duplicate(true)
 	return package
 
+
+func response_ids() -> PackedStringArray:
+	return _ids(response_options)
+
+
+func escalation_ids() -> PackedStringArray:
+	return _ids(escalation_options)
+
+
+static func _ids(options: Array[Dictionary]) -> PackedStringArray:
+	var ids: PackedStringArray = PackedStringArray()
+	for option: Dictionary in options:
+		ids.append(str(option.get("id", "")))
+	return ids

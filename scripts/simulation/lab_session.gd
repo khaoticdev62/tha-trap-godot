@@ -11,6 +11,7 @@ signal evidence_changed
 signal case_changed
 
 const SNAPSHOT_VERSION: int = 1
+const MAX_HINT_RECORDS: int = 20
 
 var package: ScenarioPackage
 var difficulty: String
@@ -18,6 +19,11 @@ var seed_value: int
 var store: EventStore = EventStore.new()
 var ledger: EvidenceLedger = EvidenceLedger.new()
 var case_file: CaseFile = CaseFile.new()
+## Scoring rules and hints, attached by LabContent. Null in a bare session.
+var rubric: Rubric = null
+var hints: HintSet = null
+## criterion id -> highest hint level used, for the report (never scored).
+var hints_used: Dictionary = {}
 
 
 func _init(scenario: ScenarioPackage, difficulty_id: String = ScenarioGenerator.DEFAULT_DIFFICULTY, seed_number: int = 0) -> void:
@@ -111,8 +117,50 @@ func set_scope(asset_refs: PackedStringArray) -> ActionResult:
 	return result
 
 
+## `reference` is a response option id from the scenario.
+func set_recommendation(reference: String) -> ActionResult:
+	var result: ActionResult = case_file.set_recommendation(reference.to_lower(), package.response_ids())
+	if result.changed:
+		case_changed.emit()
+	return result
+
+
+func set_escalation(reference: String) -> ActionResult:
+	var result: ActionResult = case_file.set_escalation(reference.to_lower(), package.escalation_ids())
+	if result.changed:
+		case_changed.emit()
+	return result
+
+
+func set_report_summary(text: String) -> ActionResult:
+	var result: ActionResult = case_file.set_report_summary(text)
+	if result.changed:
+		case_changed.emit()
+	return result
+
+
 func build_timeline() -> Array[Dictionary]:
 	return TimelineBuilder.build(store, ledger)
+
+
+## Reviews the case against the lab's rubric. Changes nothing; null if the
+## session has no rubric attached.
+func assess() -> AssessmentResult:
+	if rubric == null:
+		return null
+	return AssessmentEngine.evaluate(rubric, self)
+
+
+## The next hint for the first part of the review not yet met.
+func request_hint() -> ActionResult:
+	var result: ActionResult = HintLadder.request(self)
+	if result.changed:
+		case_changed.emit()
+	return result
+
+
+func record_hint(criterion_id: String, level: int) -> void:
+	hints_used[criterion_id] = maxi(int(hints_used.get(criterion_id, 0)), clampi(level, 1, 3))
 
 
 # --- snapshots (for saving and resuming) ------------------------------------
@@ -148,11 +196,21 @@ func restore(data: Variant) -> ActionResult:
 	var ledger_result: ActionResult = staged_ledger.load_from_dict((player as Dictionary).get("evidence"), store)
 	if not ledger_result.ok:
 		return ledger_result
-	var case_result: ActionResult = staged_case.load_from_dict((player as Dictionary).get("case"), staged_ledger, _asset_ids())
+	var case_result: ActionResult = staged_case.load_from_dict((player as Dictionary).get("case"), staged_ledger, _asset_ids(), package.response_ids(), package.escalation_ids())
 	if not case_result.ok:
 		return case_result
+	var staged_hints: Dictionary = {}
+	var raw_hints: Variant = (player as Dictionary).get("hints", {})
+	if typeof(raw_hints) != TYPE_DICTIONARY or (raw_hints as Dictionary).size() > MAX_HINT_RECORDS:
+		return ActionResult.failure("The saved hint record is not valid.")
+	for key: Variant in raw_hints:
+		var level: Variant = (raw_hints as Dictionary)[key]
+		if typeof(key) != TYPE_STRING or not SchemaValidator.validate(key, {"type": "id"}).ok() or typeof(level) not in [TYPE_INT, TYPE_FLOAT] or int(level) < 1 or int(level) > 3:
+			return ActionResult.failure("The saved hint record is not valid.")
+		staged_hints[key] = int(level)
 	ledger = staged_ledger
 	case_file = staged_case
+	hints_used = staged_hints
 	evidence_changed.emit()
 	case_changed.emit()
 	return ActionResult.success()
@@ -177,6 +235,12 @@ func state_problems() -> PackedStringArray:
 			problems.append("scope lists unknown asset %s" % asset_id)
 	if case_file.entries().size() > CaseFile.MAX_ENTRIES:
 		problems.append("too many case entries")
+	if not case_file.recommendation.is_empty() and not package.response_ids().has(case_file.recommendation):
+		problems.append("recommendation is not an offered option")
+	if not case_file.escalation.is_empty() and not package.escalation_ids().has(case_file.escalation):
+		problems.append("escalation is not an offered option")
+	if case_file.report_summary.length() > CaseFile.MAX_SUMMARY_CHARS:
+		problems.append("report summary is too long")
 	for entry: CaseEntry in case_file.entries():
 		if entry.kind == "fact" and entry.evidence_ids.is_empty():
 			problems.append("%s is a fact without evidence" % entry.id)
@@ -192,6 +256,7 @@ func _rebuild() -> void:
 	store = EventStore.new()
 	ledger = EvidenceLedger.new()
 	case_file = CaseFile.new()
+	hints_used = {}
 	# Copies, so changing a record during play can never alter the package.
 	for authored: EventRecord in package.events:
 		store.add(EventRecord.from_dict(authored.to_dict()))
@@ -200,7 +265,7 @@ func _rebuild() -> void:
 
 
 func _player_state() -> Dictionary:
-	return {"evidence": ledger.to_dict(), "case": case_file.to_dict()}
+	return {"evidence": ledger.to_dict(), "case": case_file.to_dict(), "hints": hints_used}
 
 
 func _asset_ids() -> PackedStringArray:

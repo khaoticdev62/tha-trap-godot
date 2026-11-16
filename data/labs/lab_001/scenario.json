@@ -21,6 +21,19 @@
 		{"id": "id_j_smith", "account": "j.smith", "display_name": "J. Smith", "role": "Member services representative", "normal_start_tick": 30000, "normal_end_tick": 61200, "normal_sources": ["int-10-20-0-12"], "normal_device": "HOST-014"},
 		{"id": "id_r_alvarez", "account": "r.alvarez", "display_name": "R. Alvarez", "role": "Loan officer", "normal_start_tick": 30600, "normal_end_tick": 61200, "normal_sources": ["int-10-20-0-31"], "normal_device": "HOST-022"}
 	],
+	"response_options": [
+		{"id": "monitor_only", "label": "Keep watching and wait", "summary": "Take no action yet and see whether anything else happens."},
+		{"id": "verify_then_protect", "label": "Verify first, then protect the account", "summary": "Confirm with the employee on a known phone number and check the business impact, then reset the password, end active sessions and review the MFA change."},
+		{"id": "protect_now", "label": "Reset the password and end sessions now", "summary": "Act immediately, without confirming with the employee first."},
+		{"id": "disable_account_now", "label": "Disable the account right away", "summary": "Lock the employee out until the investigation is finished."},
+		{"id": "broad_shutdown", "label": "Shut down all staff sign-ins and member services", "summary": "Stop everything until the investigation is finished."}
+	],
+	"escalation_options": [
+		{"id": "none", "label": "Do not escalate"},
+		{"id": "helpdesk", "label": "Hand it to the help desk"},
+		{"id": "soc_lead", "label": "Escalate to the SOC lead"},
+		{"id": "incident_commander", "label": "Escalate to the incident commander"}
+	],
 	"noise": {
 		"accounts": ["t.nguyen", "d.okafor", "k.patel", "l.washington", "a.romero"],
 		"sources": ["int-10-20-0-41", "int-10-20-0-42", "int-10-20-0-43", "int-10-20-0-44", "int-10-20-0-45"],

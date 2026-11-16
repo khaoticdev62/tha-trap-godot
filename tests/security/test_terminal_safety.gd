@@ -12,9 +12,9 @@ var _baseline: String
 
 
 func before_each() -> void:
-	var loader: ContentLoader = ContentLoader.new(ContentCatalog.build_registry())
-	var scenario: ContentResult = loader.load_content("lab_001_scenario")
-	_session = LabSession.new(ScenarioPackage.from_document(scenario.data), "expert", 3)
+	var content: LabContent = LabContent.load_lab(ContentLoader.new(ContentCatalog.build_registry()), "lab_001")
+	check(content.is_ready(), "the lab loads: %s" % str(content.errors))
+	_session = content.new_session("expert", 3)
 	_terminal = TerminalParser.new(_session)
 	_baseline = _session.state_hash()
 

@@ -11,7 +11,7 @@ func _init() -> void:
 		if arg.begins_with("--root="):
 			root = arg.trim_prefix("--root=")
 	var registry: ContentRegistry = ContentCatalog.build_registry()
-	var result: ContentResult = ContentLoader.new(registry, root).validate_all()
+	var result: ContentResult = ContentCatalog.validate_everything(ContentLoader.new(registry, root))
 	for message: String in result.errors:
 		print("FAIL  ", message)
 	print("content: %d documents checked, %d problems" % [registry.ids().size(), result.errors.size()])

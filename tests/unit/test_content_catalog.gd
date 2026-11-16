@@ -11,9 +11,9 @@ func _manifest() -> Dictionary:
 
 func test_shipped_content_is_valid() -> void:
 	var registry: ContentRegistry = ContentCatalog.build_registry()
-	var result: ContentResult = ContentLoader.new(registry).validate_all()
-	check(result.ok(), "everything under res://data validates: %s" % str(result.errors))
-	check(registry.ids().size() >= 1, "at least one document is registered")
+	var result: ContentResult = ContentCatalog.validate_everything(ContentLoader.new(registry))
+	check(result.ok(), "everything under res://data validates, and the documents agree with each other: %s" % str(result.errors))
+	check(registry.ids().size() >= 4, "the lab's documents are registered")
 
 
 func test_lab_001_manifest_values() -> void:

@@ -93,6 +93,36 @@ const TABLE: Dictionary = {
 		"example": "timeline build",
 		"positional_min": 0, "positional_max": 1, "options": [],
 	},
+	"case recommend": {
+		"summary": "List the possible responses, or choose one.",
+		"usage": "case recommend [response]",
+		"example": "case recommend verify_then_protect",
+		"positional_min": 0, "positional_max": 1, "options": [], "mutates": true,
+	},
+	"case escalate": {
+		"summary": "List who you can escalate to, or choose one.",
+		"usage": "case escalate [who]",
+		"example": "case escalate soc_lead",
+		"positional_min": 0, "positional_max": 1, "options": [], "mutates": true,
+	},
+	"case report": {
+		"summary": "Show the report, or set its summary text.",
+		"usage": "case report CASE-001 [\"summary text\"]",
+		"example": "case report CASE-001",
+		"positional_min": 1, "positional_max": 2, "options": [], "mutates": true,
+	},
+	"case review": {
+		"summary": "Review the case against the lab's marking guide. Nothing is changed; review as often as you like.",
+		"usage": "case review CASE-001",
+		"example": "case review CASE-001",
+		"positional_min": 1, "positional_max": 1, "options": [],
+	},
+	"hint": {
+		"summary": "Get the next hint for the part of the review you have not met yet.",
+		"usage": "hint",
+		"example": "hint",
+		"positional_min": 0, "positional_max": 0, "options": [], "mutates": true,
+	},
 }
 
 ## Names of real-computer commands people reach for. They are refused with an

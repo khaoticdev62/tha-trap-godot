@@ -11,11 +11,18 @@ const MAX_ENTRIES: int = 50
 const MAX_TEXT_CHARS: int = 300
 const MAX_EVIDENCE_PER_ENTRY: int = 10
 const MAX_SCOPE_ASSETS: int = 20
+const MAX_SUMMARY_CHARS: int = 600
 const ID_PREFIX: String = "ce_"
 
 var severity: String = SEVERITIES[0]
 ## Asset ids the player believes are affected.
 var scope: PackedStringArray = PackedStringArray()
+## Id of the chosen response option, or "".
+var recommendation: String = ""
+## Id of who the case is escalated to, or "".
+var escalation: String = ""
+## The player's short written summary for the report.
+var report_summary: String = ""
 
 var _entries: Array[CaseEntry] = []
 var _next_number: int = 1
@@ -102,15 +109,51 @@ func set_scope(asset_ids: PackedStringArray) -> ActionResult:
 	return ActionResult.success(CASE_ID, "Scope set to %s." % ", ".join(unique))
 
 
+## `allowed` are the option ids the scenario offers.
+func set_recommendation(option_id: String, allowed: PackedStringArray) -> ActionResult:
+	if not allowed.has(option_id):
+		return ActionResult.failure("That is not one of the responses on offer. Type case recommend to see them.")
+	if recommendation == option_id:
+		return ActionResult.unchanged(option_id, "That is already your recommendation.")
+	recommendation = option_id
+	return ActionResult.success(option_id, "Recommendation set.")
+
+
+func set_escalation(option_id: String, allowed: PackedStringArray) -> ActionResult:
+	if not allowed.has(option_id):
+		return ActionResult.failure("That is not someone you can escalate to. Type case escalate to see the choices.")
+	if escalation == option_id:
+		return ActionResult.unchanged(option_id, "You already chose that.")
+	escalation = option_id
+	return ActionResult.success(option_id, "Escalation set.")
+
+
+func set_report_summary(text: String) -> ActionResult:
+	if SimText.has_forbidden(text):
+		return ActionResult.failure("The summary contains characters that are not allowed. Use plain text on one line.")
+	var cleaned: String = SimText.tidy(text)
+	if cleaned.is_empty():
+		return ActionResult.failure("Write a sentence or two: what happened and what you recommend.")
+	if cleaned.length() > MAX_SUMMARY_CHARS:
+		return ActionResult.failure("That summary is %d characters; the limit is %d." % [cleaned.length(), MAX_SUMMARY_CHARS])
+	if cleaned == report_summary:
+		return ActionResult.unchanged("", "The summary is unchanged.")
+	report_summary = cleaned
+	return ActionResult.success("", "Summary saved.")
+
+
 func to_dict() -> Dictionary:
 	var rows: Array = []
 	for entry: CaseEntry in _entries:
 		rows.append(entry.to_dict())
-	return {"severity": severity, "scope": Array(scope), "next": _next_number, "entries": rows}
+	return {
+		"severity": severity, "scope": Array(scope), "next": _next_number, "entries": rows,
+		"recommendation": recommendation, "escalation": escalation, "report_summary": report_summary,
+	}
 
 
 ## Replaces the contents from saved data, but only if every part is valid.
-func load_from_dict(data: Variant, ledger: EvidenceLedger, known_asset_ids: PackedStringArray) -> ActionResult:
+func load_from_dict(data: Variant, ledger: EvidenceLedger, known_asset_ids: PackedStringArray, response_ids: PackedStringArray = PackedStringArray(), escalation_ids: PackedStringArray = PackedStringArray()) -> ActionResult:
 	if typeof(data) != TYPE_DICTIONARY:
 		return ActionResult.failure("Case data is not readable.")
 	var source: Dictionary = data
@@ -125,6 +168,15 @@ func load_from_dict(data: Variant, ledger: EvidenceLedger, known_asset_ids: Pack
 		if typeof(asset) != TYPE_STRING or not known_asset_ids.has(asset) or loaded_scope.has(asset):
 			return ActionResult.failure("Case data lists an unknown asset.")
 		loaded_scope.append(asset)
+	var chosen_response: Variant = source.get("recommendation", "")
+	var chosen_escalation: Variant = source.get("escalation", "")
+	var summary: Variant = source.get("report_summary", "")
+	if typeof(chosen_response) != TYPE_STRING or (chosen_response != "" and not response_ids.has(chosen_response)):
+		return ActionResult.failure("Case data has an invalid recommendation.")
+	if typeof(chosen_escalation) != TYPE_STRING or (chosen_escalation != "" and not escalation_ids.has(chosen_escalation)):
+		return ActionResult.failure("Case data has an invalid escalation.")
+	if typeof(summary) != TYPE_STRING or summary.length() > MAX_SUMMARY_CHARS or SimText.has_forbidden(summary):
+		return ActionResult.failure("Case data has an invalid summary.")
 	var raw_entries: Variant = source.get("entries", [])
 	if typeof(raw_entries) != TYPE_ARRAY or (raw_entries as Array).size() > MAX_ENTRIES:
 		return ActionResult.failure("Case data has an invalid entry list.")
@@ -167,6 +219,9 @@ func load_from_dict(data: Variant, ledger: EvidenceLedger, known_asset_ids: Pack
 		return ActionResult.failure("Case data has an invalid counter.")
 	severity = level
 	scope = loaded_scope
+	recommendation = chosen_response
+	escalation = chosen_escalation
+	report_summary = summary
 	_entries = loaded
 	_next_number = maxi(int(next_value), highest + 1)
 	return ActionResult.success()

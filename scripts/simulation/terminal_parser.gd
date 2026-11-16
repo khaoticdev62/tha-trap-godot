@@ -151,6 +151,16 @@ func _dispatch(key: String, positional: PackedStringArray, options: Dictionary) 
 			return _case_show()
 		"timeline build":
 			return _timeline_build(positional)
+		"case recommend":
+			return _case_choice(positional, _session.package.response_options, true)
+		"case escalate":
+			return _case_choice(positional, _session.package.escalation_options, false)
+		"case report":
+			return _case_report(positional)
+		"case review":
+			return _case_review(positional[0])
+		"hint":
+			return _hint()
 	return TerminalResult.failure(TerminalResult.Code.UNKNOWN_COMMAND, "Unknown command.")
 
 
@@ -395,6 +405,63 @@ func _timeline_build(positional: PackedStringArray) -> TerminalResult:
 		result.lines.append("%s  +%s  %s  %s  %s  %s  %s" % [str(item["time"]), str(item["minutes_since_first"]).rpad(3), str(item["display_id"]).rpad(9), str(item["actor"]).rpad(10), str(item["result"]).rpad(9), str(item["detail"]), "(%s)" % ", ".join(item["evidence_ids"])])
 	result.lines.append("%d events on the timeline." % items.size())
 	return result
+
+
+## Lists the options when called with no argument; otherwise sets the choice.
+func _case_choice(positional: PackedStringArray, options: Array[Dictionary], is_response: bool) -> TerminalResult:
+	if positional.is_empty():
+		var listing: TerminalResult = TerminalResult.new()
+		listing.lines.append("Choose one with: case %s <id>" % ("recommend" if is_response else "escalate"))
+		for option: Dictionary in options:
+			var line: String = "  %s  %s" % [str(option.get("id", "")).rpad(22), option.get("label", "")]
+			if is_response and option.has("summary"):
+				line += " - " + str(option["summary"])
+			listing.lines.append(line)
+		var current: String = _session.case_file.recommendation if is_response else _session.case_file.escalation
+		listing.lines.append("Current: %s" % (current if not current.is_empty() else "not chosen"))
+		return listing
+	if not _is_plain_word(positional[0]):
+		return _bad("That is not one of the choices. Type case %s to see them." % ("recommend" if is_response else "escalate"))
+	var outcome: ActionResult = _session.set_recommendation(positional[0]) if is_response else _session.set_escalation(positional[0])
+	if not outcome.ok:
+		return _bad(outcome.message)
+	return _say(outcome.message)
+
+
+func _case_report(positional: PackedStringArray) -> TerminalResult:
+	if not _is_case_id(positional[0]):
+		return _bad("There is one case in this lab: %s." % CaseFile.CASE_ID)
+	if positional.size() == 2:
+		var outcome: ActionResult = _session.set_report_summary(positional[1])
+		if not outcome.ok:
+			return _bad(outcome.message)
+	var case_file: CaseFile = _session.case_file
+	var result: TerminalResult = TerminalResult.new()
+	result.lines.append("%s report (SYNTHETIC TRAINING DATA)" % CaseFile.CASE_ID)
+	result.lines.append("Severity: %s" % ("not set" if case_file.severity == "unset" else case_file.severity))
+	result.lines.append("Scope: %s" % (", ".join(case_file.scope) if not case_file.scope.is_empty() else "not set"))
+	result.lines.append("Recommendation: %s" % (case_file.recommendation if not case_file.recommendation.is_empty() else "not chosen"))
+	result.lines.append("Escalated to: %s" % (case_file.escalation if not case_file.escalation.is_empty() else "not chosen"))
+	result.lines.append("Summary: %s" % (case_file.report_summary if not case_file.report_summary.is_empty() else "not written (case report CASE-001 \"your summary\")"))
+	return result
+
+
+func _case_review(case_id: String) -> TerminalResult:
+	if not _is_case_id(case_id):
+		return _bad("There is one case in this lab: %s." % CaseFile.CASE_ID)
+	var assessment: AssessmentResult = _session.assess()
+	if assessment == null:
+		return _bad("This lab has no marking guide to review against.")
+	var result: TerminalResult = TerminalResult.new()
+	result.lines = assessment.summary_lines()
+	return result
+
+
+func _hint() -> TerminalResult:
+	var outcome: ActionResult = _session.request_hint()
+	if not outcome.ok:
+		return _bad(outcome.message)
+	return _say(outcome.message)
 
 
 # --- helpers ----------------------------------------------------------------

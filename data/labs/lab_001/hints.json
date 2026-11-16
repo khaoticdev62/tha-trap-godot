@@ -1,0 +1,25 @@
+{
+	"schema_version": 1,
+	"id": "lab_001_hints",
+	"levels_by_difficulty": {"beginner": 3, "standard": 2, "advanced": 1, "expert": 0},
+	"hints": [
+		{"criterion_id": "events_collected", "level": 1, "text": "Start with the sign-in logs for one account. Which account is the employee reporting about?"},
+		{"criterion_id": "events_collected", "level": 2, "text": "Try: logs search source=auth user=j.smith. Look for failures, then a success from somewhere new."},
+		{"criterion_id": "events_collected", "level": 3, "text": "The story spans the sign-in logs, the MFA log and the member portal. Search user=j.smith across all sources and collect EVT-001 to EVT-005."},
+		{"criterion_id": "timeline_facts", "level": 1, "text": "A fact is something the evidence shows. Which events happen one after another?"},
+		{"criterion_id": "timeline_facts", "level": 2, "text": "Record one fact that cites the failures and the success together, one for the MFA change and one for the portal access."},
+		{"criterion_id": "timeline_facts", "level": 3, "text": "Use case note CASE-001 \"...\" kind=fact evidence=ev_001,ev_002,ev_003 and repeat for the MFA change and portal access, citing their evidence ids."},
+		{"criterion_id": "facts_and_hypotheses", "level": 1, "text": "What can you prove, and what are you only guessing? Keep those in separate entries."},
+		{"criterion_id": "facts_and_hypotheses", "level": 2, "text": "You need at least two facts with evidence, and at least one hypothesis or unknown, for example whether any member data was copied."},
+		{"criterion_id": "facts_and_hypotheses", "level": 3, "text": "Add an unknown such as \"Was any member data copied?\" with kind=unknown. Avoid stating data was stolen as a fact."},
+		{"criterion_id": "impact_and_scope", "level": 1, "text": "Which systems did the activity touch, and how serious is it?"},
+		{"criterion_id": "impact_and_scope", "level": 2, "text": "The employee workstation and the member support portal are involved. Use case scope and case severity."},
+		{"criterion_id": "impact_and_scope", "level": 3, "text": "Try case scope host_014,member_portal and case severity high."},
+		{"criterion_id": "response", "level": 1, "text": "Think about what could go wrong if you act too fast, and if you act too slowly."},
+		{"criterion_id": "response", "level": 2, "text": "Type case recommend to see the options. Which one confirms the facts before changing anything?"},
+		{"criterion_id": "response", "level": 3, "text": "Verifying with the employee and checking impact, then protecting the account, balances speed and harm."},
+		{"criterion_id": "report", "level": 1, "text": "Imagine the SOC lead reading this with no time. What do they need to know?"},
+		{"criterion_id": "report", "level": 2, "text": "Write a short summary of what happened and your recommendation with case report, then pick who to escalate to with case escalate."},
+		{"criterion_id": "report", "level": 3, "text": "Try case report CASE-001 \"...\" with at least a sentence or two, and case escalate soc_lead."}
+	]
+}

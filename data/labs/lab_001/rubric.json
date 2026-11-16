@@ -1,0 +1,95 @@
+{
+	"schema_version": 1,
+	"id": "lab_001_rubric",
+	"lab_id": "lab_001",
+	"content_version": "1.0.0",
+	"max_points": 100,
+	"pass_points": 70,
+	"criteria": [
+		{
+			"id": "events_collected", "title": "Found the key events", "check": "events_collected", "max_points": 20,
+			"params": {"required": ["evt_001", "evt_002", "evt_003", "evt_004", "evt_005"], "points_each": 4},
+			"met_feedback": "You collected every key event in the sign-in story.",
+			"partial_feedback": "You found part of the story. Still missing: {missing}.",
+			"unmet_feedback": "No key events collected yet. Search the sign-in logs for the employee account and add what stands out as evidence."
+		},
+		{
+			"id": "timeline_facts", "title": "Built an accurate timeline", "check": "fact_cites_events", "max_points": 20,
+			"params": {"groups": [
+				{"label": "the failed sign-ins followed by a success", "events_all": ["evt_001", "evt_003"], "points": 10},
+				{"label": "the new MFA device request", "events_all": ["evt_004"], "points": 5},
+				{"label": "the support portal access", "events_all": ["evt_005"], "points": 5}
+			]},
+			"met_feedback": "Your facts cover the whole sequence: failures, success, MFA change and portal access.",
+			"partial_feedback": "Your timeline is incomplete. No fact yet backs up: {missing}.",
+			"unmet_feedback": "No fact yet describes what happened in order. Record facts that cite your evidence for each step."
+		},
+		{
+			"id": "facts_and_hypotheses", "title": "Separated facts from guesses", "check": "facts_and_hypotheses", "max_points": 20,
+			"params": {"min_facts": 2, "points_facts": 8, "points_open": 6, "points_claims": 6},
+			"met_feedback": "You kept confirmed facts apart from ideas and open questions, and claimed nothing the evidence cannot support.",
+			"partial_feedback": "Good start, but check: {missing}.",
+			"unmet_feedback": "Record at least two facts backed by evidence, and at least one hypothesis or unknown for what you cannot yet prove."
+		},
+		{
+			"id": "impact_and_scope", "title": "Judged impact and scope", "check": "scope_and_severity", "max_points": 15,
+			"params": {
+				"scope_points": {"host_014": 4, "member_portal": 6},
+				"severity_points": {"medium": 5, "high": 5, "low": 2, "critical": 2}
+			},
+			"met_feedback": "You named the affected systems and set a proportionate severity.",
+			"partial_feedback": "Impact is partly covered. Still to do: {missing}.",
+			"unmet_feedback": "Name the assets you think are affected (case scope) and set a severity."
+		},
+		{
+			"id": "response", "title": "Recommended a proportionate response", "check": "response_quality", "max_points": 15,
+			"params": {},
+			"met_feedback": "Your recommendation fits what the evidence supports.",
+			"partial_feedback": "Your recommendation is reasonable but could be more proportionate.",
+			"unmet_feedback": "Choose a recommended response (case recommend)."
+		},
+		{
+			"id": "report", "title": "Wrote a clear report and escalated well", "check": "report_quality", "max_points": 10,
+			"params": {"min_summary_chars": 40, "summary_points": 6},
+			"met_feedback": "Your summary is clear and you escalated to the right person.",
+			"partial_feedback": "The report is partly there. Still to do: {missing}.",
+			"unmet_feedback": "Write a short summary of what happened and what you recommend (case report), then choose who to escalate to."
+		}
+	],
+	"critical_errors": [
+		{
+			"id": "unsupported_claim", "check": "unsupported_claim",
+			"params": {
+				"claim_stems": ["exfiltrat", "data was stolen", "data was copied", "data was leaked", "confirmed breach", "breach is confirmed"],
+				"negation_markers": ["no evidence", "not confirmed", "unconfirmed", "no sign", "cannot confirm", "can't confirm", "not yet", "unknown", "whether", "might", "may have", "possible"],
+				"supporting_tags": ["data_copy"]
+			},
+			"coaching": "One of your facts says data was stolen or copied. The logs show someone viewed the member portal, but nothing shows data leaving. Record that as a hypothesis or an unknown, and say what evidence would confirm it."
+		},
+		{
+			"id": "broad_response_without_analysis", "check": "broad_response_without_analysis",
+			"params": {"min_evidence": 3},
+			"coaching": "You recommended shutting everything down before working out what is affected. Shutting down hurts members and staff. Collect evidence, name the affected assets and set a severity first, then choose a response that matches."
+		}
+	],
+	"response_scores": [
+		{"option_id": "verify_then_protect", "quality": "best", "points": 15, "feedback": "Best choice. Verifying with the employee and checking impact first avoids locking out the real person or tipping off an attacker, and protection follows straight after."},
+		{"option_id": "protect_now", "quality": "acceptable", "points": 10, "feedback": "Reasonable, and it stops the access quickly. But acting before verifying could disrupt the real employee or miss the MFA change, so verify first when you can."},
+		{"option_id": "disable_account_now", "quality": "overreach", "points": 6, "feedback": "This stops access but is heavier than needed. Disabling the account blocks a real employee before you know the facts."},
+		{"option_id": "monitor_only", "quality": "weak", "points": 3, "feedback": "Waiting leaves a likely takeover in place. The evidence is strong enough to act on after verifying."},
+		{"option_id": "broad_shutdown", "quality": "overreach", "broad": true, "points": 2, "feedback": "Far bigger than the problem. One account is involved, so shutting down all sign-ins and member services causes more harm than it prevents."}
+	],
+	"escalation_scores": [
+		{"option_id": "soc_lead", "points": 4, "feedback": "The SOC lead is the right person to review a likely account takeover."},
+		{"option_id": "incident_commander", "points": 4, "feedback": "Escalating to the incident commander is reasonable because member data may have been viewed."},
+		{"option_id": "helpdesk", "points": 2, "feedback": "The help desk can help verify the employee, but it should not own a suspected takeover."},
+		{"option_id": "none", "points": 0, "feedback": "A suspected account takeover with member data involved should be escalated."}
+	],
+	"rationale": [
+		"Two failed sign-ins followed by a success from a source this account never used is a classic sign of a guessed or reused password. It is an indicator, not proof.",
+		"A new MFA device requested a few minutes after the success suggests someone trying to keep access. It points to takeover, but it needs confirming.",
+		"The help-desk report that the employee did not sign in supports takeover. Confirm directly with the employee before acting.",
+		"Member data may have been viewed through the support portal. Whether any data left is unknown; say so instead of declaring it.",
+		"A proportionate response verifies identity and impact first, then resets the password, ends active sessions and reviews the MFA change."
+	]
+}
