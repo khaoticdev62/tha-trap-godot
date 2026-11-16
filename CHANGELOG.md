@@ -5,6 +5,7 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- `ContentRegistry` and `ContentLoader` (`scripts/data/`): content is loaded by registered id only (never a caller path), with a per-file size cap, malformed-JSON errors that carry a line number, a required `schema_version` (newer versions refused), schema validation, and `validate_all()` that reports every bad document together. Schemas live in code for now rather than `data/schema/*.json`; revisit when more than one lab exists.
 - `SchemaValidator` and `ContentResult` (`scripts/data/`): declarative validation for untrusted content (types, ranges, enums, stable ids, text safety incl. control/zero-width/bidi characters, nesting cap, error cap, safe relative content paths, duplicate-id finder). First piece of milestone M1; no content or loader yet.
 - Phase 1 audit documents (`docs/audits`, `docs/architecture`, `docs/production`) and the production specs under version control in `docs/spec/` (decisions D-008 to D-013 recorded in `00`).
 - Local pre-push test gate (`tools/hooks/pre-push`, `tools/install-hooks.ps1`) as a stand-in for CI.

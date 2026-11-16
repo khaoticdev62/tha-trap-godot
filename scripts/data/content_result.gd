@@ -8,6 +8,8 @@ extends RefCounted
 const MAX_ERRORS: int = 50
 
 var errors: PackedStringArray = PackedStringArray()
+## The validated document when loading succeeded; null otherwise.
+var data: Variant = null
 
 
 func ok() -> bool:
@@ -19,6 +21,14 @@ func add(path: String, reason: String) -> void:
 		errors.append("%s: %s" % [path, reason])
 	elif errors.size() == MAX_ERRORS:
 		errors.append("(further errors omitted)")
+
+
+## Appends another result's errors as they are (they already carry their path).
+func merge(other: ContentResult) -> void:
+	for message: String in other.errors:
+		if errors.size() > MAX_ERRORS:
+			return
+		errors.append(message)
 
 
 func is_full() -> bool:
