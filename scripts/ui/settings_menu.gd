@@ -10,6 +10,8 @@ var _scale_slider: HSlider
 var _scale_value: Label
 var _motion_check: CheckButton
 var _contrast_check: CheckButton
+var _speed_choice: OptionButton
+var _hint: HintBar
 var _status: Label
 var _back_button: Button
 
@@ -69,6 +71,17 @@ func _build_ui() -> void:
 	_contrast_check = _check("High contrast", "Uses a black and white scheme with a yellow focus outline.")
 	column.add_child(_contrast_check)
 
+	column.add_child(_label("Dialogue text speed", &""))
+	_speed_choice = OptionButton.new()
+	_speed_choice.custom_minimum_size = Vector2(420, UiTheme.MIN_TARGET_HEIGHT)
+	_speed_choice.focus_mode = Control.FOCUS_ALL
+	for option: Dictionary in AccessibilitySettings.TEXT_SPEEDS:
+		_speed_choice.add_item(option["name"])
+		_speed_choice.set_item_metadata(_speed_choice.item_count - 1, option["id"])
+	_name_for_assistive_tech(_speed_choice, "Dialogue text speed", "How fast dialogue text appears. Instant shows whole lines at once.")
+	_speed_choice.item_selected.connect(func(_i: int) -> void: _on_value_changed(0.0))
+	column.add_child(_speed_choice)
+
 	var sample: Label = _label("Sample: Learn. Defend. Level Up.", &"MutedLabel")
 	sample.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(sample)
@@ -81,6 +94,15 @@ func _build_ui() -> void:
 	_status = _label("", &"MutedLabel")
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(_status)
+
+	_hint = HintBar.new()
+	column.add_child(_hint)
+	_hint.bind(_scale_slider, "Makes all text larger or smaller. Left and right change it.")
+	_hint.bind(_motion_check, "Turns off animated effects, including typed-out dialogue.")
+	_hint.bind(_contrast_check, "Black and white colours with a bright yellow focus outline.")
+	_hint.bind(_speed_choice, "Dialogue never moves on by itself. Press accept to finish a line early.")
+	_hint.bind(reset_button, "Puts every accessibility setting back to its default.")
+	_hint.bind(_back_button, "Return to the title screen. Escape or B also works.")
 
 
 func _label(text: String, variation: StringName) -> Label:
@@ -124,14 +146,22 @@ func _sync_controls() -> void:
 	_scale_slider.value = current.text_scale
 	_motion_check.button_pressed = current.reduced_motion
 	_contrast_check.button_pressed = current.high_contrast
+	_speed_choice.select(_speed_index(current.text_speed))
 	_scale_value.text = "%d%%" % roundi(current.text_scale * 100.0)
 	_syncing = false
+
+
+func _speed_index(speed_id: String) -> int:
+	for index: int in _speed_choice.item_count:
+		if _speed_choice.get_item_metadata(index) == speed_id:
+			return index
+	return 0
 
 
 func _on_value_changed(_ignored: float) -> void:
 	if _syncing:
 		return
-	var saved: bool = _settings.update(_scale_slider.value, _motion_check.button_pressed, _contrast_check.button_pressed)
+	var saved: bool = _settings.update(_scale_slider.value, _motion_check.button_pressed, _contrast_check.button_pressed, str(_speed_choice.get_item_metadata(_speed_choice.selected)))
 	_status.text = "" if saved else "Your change applies now but could not be saved to disk."
 
 

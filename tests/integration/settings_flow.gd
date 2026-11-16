@@ -55,17 +55,24 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_check(settings.current.reduced_motion and settings.current.high_contrast, "toggles change the service")
 
+	var speed: OptionButton = _find_node(screen, "OptionButton")
+	_check(speed != null and speed.item_count == AccessibilitySettings.TEXT_SPEEDS.size(), "text speed offers every defined speed")
+	speed.select(0)
+	speed.item_selected.emit(0)
+	await get_tree().process_frame
+	_check(settings.current.text_speed == "slow", "text speed choice changes the service")
+
 	var reloaded: SettingsService = SettingsService.new()
 	reloaded.settings_path = test_path
 	reloaded.apply_theme_to_root = false
 	reloaded.load_from_disk()
-	_check(reloaded.current.text_scale == 1.5 and reloaded.current.reduced_motion and reloaded.current.high_contrast, "changes persisted to disk")
+	_check(reloaded.current.text_scale == 1.5 and reloaded.current.reduced_motion and reloaded.current.high_contrast and reloaded.current.text_speed == "slow", "changes persisted to disk")
 	reloaded.free()
 
 	_find_button(screen, "Reset to defaults").pressed.emit()
 	await get_tree().process_frame
 	_check(settings.current.to_dict() == AccessibilitySettings.new().to_dict(), "reset restores defaults")
-	_check(slider.value == 1.0 and not checks[0].button_pressed and not checks[1].button_pressed, "controls reflect the reset")
+	_check(slider.value == 1.0 and not checks[0].button_pressed and not checks[1].button_pressed and speed.selected == 1, "controls reflect the reset (speed back to Normal)")
 
 	# Controller/keyboard cancel returns to the title. SceneFlow swaps out the
 	# current scene (this test node), so read the result synchronously.

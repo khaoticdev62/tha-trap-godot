@@ -26,11 +26,12 @@ func load_from_disk() -> void:
 
 ## Applies a validated change and persists it. Returns false if saving failed
 ## (the in-memory change still applies so the session stays consistent).
-func update(text_scale: float, reduced_motion: bool, high_contrast: bool) -> bool:
+func update(text_scale: float, reduced_motion: bool, high_contrast: bool, text_speed: String) -> bool:
 	var candidate: Dictionary = {
 		"text_scale": text_scale,
 		"reduced_motion": reduced_motion,
 		"high_contrast": high_contrast,
+		"text_speed": text_speed,
 	}
 	current = AccessibilitySettings.from_dict(candidate)
 	_publish()

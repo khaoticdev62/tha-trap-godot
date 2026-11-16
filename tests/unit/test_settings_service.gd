@@ -30,7 +30,7 @@ func test_missing_file_gives_defaults() -> void:
 
 
 func test_update_persists_and_reloads() -> void:
-	check(_service.update(1.5, true, true), "update saves")
+	check(_service.update(1.5, true, true, "normal"), "update saves")
 	var other: SettingsService = SettingsService.new()
 	other.settings_path = _path
 	other.apply_theme_to_root = false
@@ -41,15 +41,27 @@ func test_update_persists_and_reloads() -> void:
 	other.free()
 
 
+func test_text_speed_persists_and_bad_values_are_rejected() -> void:
+	_service.update(1.0, false, false, "slow")
+	var other: SettingsService = SettingsService.new()
+	other.settings_path = _path
+	other.apply_theme_to_root = false
+	other.load_from_disk()
+	check_eq(other.current.text_speed, "slow", "speed persisted")
+	other.free()
+	_service.update(1.0, false, false, "ludicrous")
+	check_eq(_service.current.text_speed, "normal", "unknown speed falls back")
+
+
 func test_update_validates_input() -> void:
-	_service.update(500.0, true, false)
+	_service.update(500.0, true, false, "normal")
 	check_eq(_service.current.text_scale, AppConfig.TEXT_SCALE_MAX, "out-of-range scale is clamped before saving")
-	_service.update(NAN, false, false)
+	_service.update(NAN, false, false, "normal")
 	check_eq(_service.current.text_scale, 1.0, "NaN scale is rejected")
 
 
 func test_reset_restores_defaults_and_persists() -> void:
-	_service.update(2.0, true, true)
+	_service.update(2.0, true, true, "normal")
 	check(_service.reset_to_defaults(), "reset saves")
 	_service.load_from_disk()
 	check_eq(_service.current.to_dict(), AccessibilitySettings.new().to_dict(), "defaults after reload")
@@ -69,19 +81,19 @@ func test_oversized_file_is_ignored() -> void:
 
 
 func test_no_temp_file_left_behind() -> void:
-	_service.update(1.25, false, false)
+	_service.update(1.25, false, false, "normal")
 	check(not FileAccess.file_exists(_path + ".tmp"), "temp file renamed away")
 
 
 func test_changed_signal_fires_with_new_values() -> void:
 	var seen: Array[float] = []
 	_service.changed.connect(func(settings: AccessibilitySettings) -> void: seen.append(settings.text_scale))
-	_service.update(1.75, false, false)
+	_service.update(1.75, false, false, "normal")
 	_service.reset_to_defaults()
 	check_eq(seen, [1.75, 1.0] as Array[float], "signal carries each new state")
 
 
 func test_unwritable_path_reports_failure_but_keeps_session_state() -> void:
 	_service.settings_path = "user://no_such_dir_%d/settings.json" % Time.get_ticks_usec()
-	check(not _service.update(1.5, false, false), "failed save is reported")
+	check(not _service.update(1.5, false, false, "normal"), "failed save is reported")
 	check_eq(_service.current.text_scale, 1.5, "in-memory change still applies")

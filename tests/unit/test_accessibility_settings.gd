@@ -39,6 +39,15 @@ func test_scale_is_clamped_snapped_and_finite() -> void:
 	check_eq(AccessibilitySettings.from_dict({"text_scale": 1.1}).text_scale, 1.0, "snaps down when closer")
 
 
+func test_text_speed_defaults_validates_and_round_trips() -> void:
+	check_eq(AccessibilitySettings.new().text_speed, "normal", "default speed")
+	for option: Dictionary in AccessibilitySettings.TEXT_SPEEDS:
+		var restored: AccessibilitySettings = AccessibilitySettings.from_dict({"text_speed": option["id"]})
+		check_eq(restored.text_speed, option["id"], "'%s' is accepted" % option["id"])
+	for bad: Variant in ["warp", "", "FAST", 3, null, [], "../x"]:
+		check_eq(AccessibilitySettings.from_dict({"text_speed": bad}).text_speed, "normal", "'%s' falls back" % str(bad))
+
+
 func test_motion_duration_honours_reduced_motion() -> void:
 	var settings: AccessibilitySettings = AccessibilitySettings.new()
 	check_eq(settings.motion_duration(0.3), 0.3, "full motion keeps duration")

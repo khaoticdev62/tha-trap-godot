@@ -2,7 +2,7 @@
 
 A single-player, story-driven cybersecurity career RPG built in Godot 4. Learn. Defend. Level Up.
 
-**Status:** Phase 1 (Foundation) in progress. Boots to a working title screen with save/load, an accessibility Settings screen and a character creator. There is no world, campaign or lab yet. See the production specs (`00`–`10` Markdown files in the parent folder) for the full design.
+**Status:** Phase 1 (Foundation) in progress. Boots to a working title screen with save/load, an accessibility Settings screen and a character creator, and the dialogue box component (not yet used by a story scene). There is no world, campaign or lab yet. See the production specs (`00`–`10` Markdown files in the parent folder) for the full design.
 
 ## Requirements
 - Godot 4.7.2 stable (standard build, not .NET). Pinned for reproducibility; bump deliberately.
@@ -20,7 +20,7 @@ tools\run-tests.ps1 save_service    # only test files whose name contains the fi
 scripts/core/      AppConfig, Validate, CharacterOptions, AccessibilitySettings, SettingsService, EventBus, SceneFlow, ProfileService, PlayerProfile, DiagnosticsService, AppBootstrap
 scripts/save/      SaveService, SaveResult, SaveMigrations
 scripts/platform/  InputActions (keyboard + controller bindings)
-scripts/ui/        Palette tokens, UiTheme, ModalDialog, boot, title, settings and character-creator screens
+scripts/ui/        Palette tokens, UiTheme, ModalDialog, DialogueBox, Typewriter, HintBar, boot, title, settings and character-creator screens
 scenes/            boot/, menus/
 tests/unit/        headless unit tests (test_*.gd, extend TestCase)
 tests/integration/ scene-driven checks that need the real autoloads
