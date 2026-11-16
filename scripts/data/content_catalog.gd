@@ -145,6 +145,64 @@ const HINTS_SCHEMA: Dictionary = {
 	},
 }
 
+const _KNOWLEDGE_OPTION_SCHEMA: Dictionary = {
+	"type": "object",
+	"fields": {
+		"id": {"type": "id", "required": true},
+		"text": {"type": "string", "required": true, "max_length": 200},
+		"correct": {"type": "bool", "required": true},
+		"feedback": {"type": "string", "required": true, "max_length": 300},
+	},
+}
+
+## Player-facing teaching text for one mission (briefing, objectives, learning
+## goals, formative checks). Scoring never reads this; the rubric does.
+const LEARNING_SCHEMA: Dictionary = {
+	"type": "object",
+	"fields": {
+		"schema_version": {"type": "int", "required": true, "min": 1},
+		"id": {"type": "id", "required": true},
+		"mission_id": {"type": "id", "required": true},
+		"case_account": {"type": "string", "required": true, "max_length": 32},
+		"case_title": {"type": "string", "required": true, "max_length": 80},
+		"briefing": {"type": "array", "required": true, "max_items": 8, "items": {"type": "string", "max_length": 500}},
+		"objectives": {"type": "array", "required": true, "max_items": 12, "items": {
+			"type": "object",
+			"fields": {
+				"id": {"type": "id", "required": true},
+				"text": {"type": "string", "required": true, "max_length": 200},
+				"criterion_id": {"type": "id", "required": true},
+			},
+		}},
+		"community_impact": {"type": "string", "required": true, "max_length": 600},
+		"learning_objectives": {"type": "array", "required": true, "max_items": 16, "items": {
+			"type": "object",
+			"fields": {
+				"id": {"type": "id", "required": true},
+				"title": {"type": "string", "required": true, "max_length": 60},
+				"explanation": {"type": "string", "required": true, "max_length": 400},
+			},
+		}},
+		"knowledge_checks": {"type": "array", "required": true, "max_items": 12, "items": {
+			"type": "object",
+			"fields": {
+				"id": {"type": "id", "required": true},
+				"learning_objective_id": {"type": "id", "required": true},
+				"question": {"type": "string", "required": true, "max_length": 240},
+				"options": {"type": "array", "required": true, "max_items": 6, "items": _KNOWLEDGE_OPTION_SCHEMA},
+			},
+		}},
+		"career_preview": {"type": "array", "required": true, "max_items": 6, "items": {
+			"type": "object",
+			"fields": {
+				"stage": {"type": "string", "required": true, "max_length": 40},
+				"title": {"type": "string", "required": true, "max_length": 60},
+				"note": {"type": "string", "required": true, "max_length": 200},
+			},
+		}},
+	},
+}
+
 ## Missions this build ships (content ids).
 const MISSION_IDS: Array[String] = ["mission_lab_001"]
 
@@ -213,6 +271,8 @@ static func build_registry() -> ContentRegistry:
 	assert(outcome.ok(), "ContentCatalog registration failed: %s" % str(outcome.errors))
 	outcome = registry.register("mission_lab_001", "missions/mission_lab_001.json", MISSION_SCHEMA, 1)
 	assert(outcome.ok(), "ContentCatalog registration failed: %s" % str(outcome.errors))
+	outcome = registry.register("mission_lab_001_learning", "missions/mission_lab_001_learning.json", LEARNING_SCHEMA, 1, learning_problems)
+	assert(outcome.ok(), "ContentCatalog registration failed: %s" % str(outcome.errors))
 	return registry
 
 
@@ -234,6 +294,10 @@ static func validate_everything(loader: ContentLoader) -> ContentResult:
 			missions[mission_id] = loaded.data
 	for message: String in mission_problems(missions, PackedStringArray(MISSION_IDS)):
 		combined.add("missions", message)
+	var learning: ContentResult = loader.load_content("mission_lab_001_learning")
+	if learning.ok() and rubric.ok():
+		for message: String in learning_cross_problems(learning.data, rubric.data):
+			combined.add("mission_lab_001_learning", message)
 	return combined
 
 
@@ -319,6 +383,44 @@ static func lab_cross_problems(scenario: Dictionary, rubric: Dictionary, hints: 
 		for level: int in [1, 2, 3]:
 			if not seen_levels.has("%s/%d" % [criterion_id, level]):
 				problems.append("criterion '%s' has no level %d hint" % [criterion_id, level])
+	return problems
+
+
+## Rules inside one learning document: ids are unique, every check has exactly
+## one correct option, and every check teaches a declared learning objective.
+static func learning_problems(document: Dictionary) -> PackedStringArray:
+	var problems: PackedStringArray = PackedStringArray()
+	for group: String in ["objectives", "learning_objectives", "knowledge_checks"]:
+		for duplicate: String in SchemaValidator.find_duplicate_ids(document.get(group, []), "id"):
+			problems.append("%s: id '%s' appears more than once" % [group, duplicate])
+	var objective_ids: PackedStringArray = _ids_of(document.get("learning_objectives", []), "id")
+	for check: Dictionary in document.get("knowledge_checks", []):
+		var check_id: String = str(check.get("id", ""))
+		if not objective_ids.has(str(check.get("learning_objective_id", ""))):
+			problems.append("check '%s' teaches an unknown learning objective" % check_id)
+		var options: Array = check.get("options", [])
+		var correct: int = 0
+		for option: Dictionary in options:
+			if option.get("correct", false) == true:
+				correct += 1
+		if options.size() < 2:
+			problems.append("check '%s' needs at least two options" % check_id)
+		if correct != 1:
+			problems.append("check '%s' must have exactly one correct option (has %d)" % [check_id, correct])
+		for duplicate: String in SchemaValidator.find_duplicate_ids(options, "id"):
+			problems.append("check '%s': option id '%s' appears more than once" % [check_id, duplicate])
+	return problems
+
+
+## The learning document must point at real scoring criteria and its mission.
+static func learning_cross_problems(learning: Dictionary, rubric: Dictionary) -> PackedStringArray:
+	var problems: PackedStringArray = PackedStringArray()
+	var criterion_ids: PackedStringArray = _ids_of(rubric.get("criteria", []), "id")
+	for objective: Dictionary in learning.get("objectives", []):
+		if not criterion_ids.has(str(objective.get("criterion_id", ""))):
+			problems.append("objective '%s' points at unknown criterion '%s'" % [objective.get("id", ""), objective.get("criterion_id", "")])
+	if not MISSION_IDS.has(str(learning.get("mission_id", ""))):
+		problems.append("learning document names unknown mission '%s'" % learning.get("mission_id", ""))
 	return problems
 
 

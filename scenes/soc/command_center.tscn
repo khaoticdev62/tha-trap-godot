@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/soc/command_center.gd" id="1_screen"]
+
+[node name="CommandCenter" type="MarginContainer"]
+script = ExtResource("1_screen")

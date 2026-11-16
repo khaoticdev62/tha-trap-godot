@@ -13,6 +13,9 @@ const BINDINGS: Dictionary = {
 	&"open_pause": {"keys": [KEY_ESCAPE], "buttons": [JOY_BUTTON_START], "axis": []},
 	&"open_map": {"keys": [KEY_M], "buttons": [JOY_BUTTON_Y], "axis": []},
 	&"open_glossary": {"keys": [KEY_G], "buttons": [JOY_BUTTON_X], "axis": []},
+	# Switch between the screens of a tabbed interface such as the SOC (LB / RB).
+	&"nav_prev": {"keys": [KEY_BRACKETLEFT, KEY_PAGEUP], "buttons": [JOY_BUTTON_LEFT_SHOULDER], "axis": []},
+	&"nav_next": {"keys": [KEY_BRACKETRIGHT, KEY_PAGEDOWN], "buttons": [JOY_BUTTON_RIGHT_SHOULDER], "axis": []},
 }
 
 ## Controller buttons added to built-in UI actions. The engine's defaults for

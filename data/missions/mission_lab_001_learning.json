@@ -1,0 +1,78 @@
+{
+	"schema_version": 1,
+	"id": "mission_lab_001_learning",
+	"mission_id": "mission_lab_001",
+	"case_account": "j.smith",
+	"case_title": "Suspicious Authentication",
+	"briefing": [
+		"It is a Monday morning at Market Row Community Credit Union. J. Smith, a member services representative, tells the help desk that something is off: there has been no sign-in from them yet today, but their account looks busy.",
+		"You are the analyst on call. Everything on screen is synthetic training data, but treat it the way you would treat the real thing: look at what the logs actually say, collect evidence, and only claim what the evidence can support.",
+		"Your job is not to guess who did this. It is to work out what happened, which systems are affected, and what a proportionate next step looks like."
+	],
+	"objectives": [
+		{"id": "obj_events", "text": "Find the key sign-in, MFA and portal events for the reported account.", "criterion_id": "events_collected"},
+		{"id": "obj_timeline", "text": "Build an accurate timeline from evidence you collected.", "criterion_id": "timeline_facts"},
+		{"id": "obj_facts", "text": "Keep confirmed facts separate from hypotheses and open questions.", "criterion_id": "facts_and_hypotheses"},
+		{"id": "obj_impact", "text": "Name the affected systems and set a proportionate severity.", "criterion_id": "impact_and_scope"},
+		{"id": "obj_response", "text": "Recommend a response that fits the evidence.", "criterion_id": "response"},
+		{"id": "obj_report", "text": "Write a clear summary and escalate to the right person.", "criterion_id": "report"}
+	],
+	"community_impact": "Market Row members trust the credit union with their savings, loans and contact details. If a staff account is taken over, the member support portal could expose those details. A calm, well-documented response protects members and keeps the branch open for the neighbours who rely on it.",
+	"learning_objectives": [
+		{"id": "lo_authentication", "title": "Authentication", "explanation": "Authentication is how a system checks that you are who you say you are. A sign-in event records who tried, from where, on what device and whether it worked."},
+		{"id": "lo_mfa", "title": "Multi-factor authentication (MFA)", "explanation": "MFA asks for a second proof, such as a code or approval on a phone you already enrolled. Adding a new MFA device is a sensitive change, because whoever controls that device can pass the second check."},
+		{"id": "lo_patterns", "title": "Suspicious login patterns", "explanation": "Repeated failures followed by a success, a sign-in from a source the person never uses, or activity when they say they were not working are all patterns worth a closer look. A pattern is a lead, not a verdict."},
+		{"id": "lo_siem", "title": "SIEM filtering", "explanation": "A SIEM collects logs from many places into one searchable view. Filtering by account, source, result and time turns thousands of events into the few that matter."},
+		{"id": "lo_evidence", "title": "Evidence handling", "explanation": "Evidence is the specific log events behind a claim. Collect it with its event IDs so anyone can check your work, and do not alter the original records."},
+		{"id": "lo_timeline", "title": "Timeline reconstruction", "explanation": "Putting evidence in time order shows cause and effect: what happened first, what followed, and how long each step took."},
+		{"id": "lo_response", "title": "Incident response", "explanation": "Response is a sequence: verify, scope, contain, preserve, recover. Match the action to the evidence. Shutting everything down is rarely proportionate."},
+		{"id": "lo_documentation", "title": "Documentation", "explanation": "A good case file states facts with evidence, labels guesses as hypotheses, lists what is still unknown, and ends with a clear recommendation another analyst can act on."}
+	],
+	"knowledge_checks": [
+		{
+			"id": "kc_failures_then_success",
+			"learning_objective_id": "lo_patterns",
+			"question": "An account shows two failed sign-ins and then a success from a source it has never used. What is the best description?",
+			"options": [
+				{"id": "a", "text": "Proof that the account was hacked.", "correct": false, "feedback": "Not yet. The pattern is worth investigating, but a pattern alone is a lead. Look for corroborating evidence before you call it proof."},
+				{"id": "b", "text": "A pattern worth investigating that needs more evidence.", "correct": true, "feedback": "Right. It is an indicator, not a conclusion. Next you would check the source, the device and what happened after the sign-in."},
+				{"id": "c", "text": "Normal behaviour, so it can be ignored.", "correct": false, "feedback": "A new source plus earlier failures is not what this person normally does. Ignoring it would skip a real lead."}
+			]
+		},
+		{
+			"id": "kc_mfa_change",
+			"learning_objective_id": "lo_mfa",
+			"question": "Why does a new MFA device enrollment right after a suspicious sign-in matter?",
+			"options": [
+				{"id": "a", "text": "It means the sign-in was safe.", "correct": false, "feedback": "The opposite can be true: enrolling a device can give someone lasting access."},
+				{"id": "b", "text": "It could let whoever controls that device pass the second check later.", "correct": true, "feedback": "Yes. That is why an unexpected enrollment is treated as a high-value event and goes into the evidence."},
+				{"id": "c", "text": "MFA changes are never logged.", "correct": false, "feedback": "They are logged, and the log is exactly where you find them."}
+			]
+		},
+		{
+			"id": "kc_fact_vs_hypothesis",
+			"learning_objective_id": "lo_documentation",
+			"question": "You believe the employee's password was guessed, but no event shows how. How should you record it?",
+			"options": [
+				{"id": "a", "text": "As a fact, so the report sounds confident.", "correct": false, "feedback": "A fact needs evidence behind it. Writing a guess as a fact is the kind of error a reviewer will flag."},
+				{"id": "b", "text": "As a hypothesis, and list what would confirm it.", "correct": true, "feedback": "Good. Hypotheses and unknowns keep the case honest and tell the next analyst where to look."},
+				{"id": "c", "text": "Leave it out of the case file.", "correct": false, "feedback": "Leaving out an open question hides a gap. Record it as an unknown or a hypothesis."}
+			]
+		},
+		{
+			"id": "kc_proportionate_response",
+			"learning_objective_id": "lo_response",
+			"question": "One employee account looks affected. Which first response is the most proportionate?",
+			"options": [
+				{"id": "a", "text": "Shut down all staff sign-ins and member services.", "correct": false, "feedback": "That harms every member and every colleague to address one account."},
+				{"id": "b", "text": "Verify with the employee on a known number, then protect the account.", "correct": true, "feedback": "Yes. Verify first, then reset the password, end sessions and review the MFA change."},
+				{"id": "c", "text": "Wait and watch without acting.", "correct": false, "feedback": "Waiting leaves a possibly compromised account active while member data is within reach."}
+			]
+		}
+	],
+	"career_preview": [
+		{"stage": "Where you are now", "title": "Foundations", "note": "Reading logs, collecting evidence and writing an honest case file."},
+		{"stage": "Next in the story", "title": "Endpoint and identity defense", "note": "Following a sign-in story across devices, accounts and directory changes."},
+		{"stage": "Later in the story", "title": "Incident coordination", "note": "Leading a response with other teams while keeping the record clear."}
+	]
+}

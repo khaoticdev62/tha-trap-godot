@@ -59,6 +59,7 @@ func _build_ui() -> void:
 	_continue_button = _add_button(menu, "Continue", _on_continue_pressed)
 	_new_game_button = _add_button(menu, "New Game", _on_new_game_pressed)
 	_load_button = _add_button(menu, "Load Game", _on_load_game_pressed)
+	_add_button(menu, "SOC Console", _on_soc_pressed)
 	_add_button(menu, "Settings", _on_settings_pressed)
 	_add_button(menu, "Quit", _on_quit_pressed)
 
@@ -131,7 +132,7 @@ func _on_continue_pressed() -> void:
 		_refresh_save_state()
 		return
 	var note: String = " (restored from backup)" if result.recovered_from_backup else ""
-	_set_status("Welcome back, %s%s. The world map is not built yet." % [get_node("/root/Profiles").current.display_name, note])
+	_set_status("Welcome back, %s%s. The world map is not built yet; the SOC Console is open from this menu." % [get_node("/root/Profiles").current.display_name, note])
 
 
 func _on_new_game_pressed() -> void:
@@ -145,6 +146,10 @@ func _on_load_game_pressed() -> void:
 func _open_slots(mode: String) -> void:
 	_progress.slot_screen_mode = mode
 	get_node("/root/Scenes").go_to(&"save_slots")
+
+
+func _on_soc_pressed() -> void:
+	get_node("/root/Scenes").go_to(&"soc")
 
 
 func _on_settings_pressed() -> void:

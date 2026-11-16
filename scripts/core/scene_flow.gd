@@ -13,6 +13,7 @@ const SCENES: Dictionary = {
 	&"settings": "res://scenes/menus/settings.tscn",
 	&"creator": "res://scenes/menus/character_creator.tscn",
 	&"save_slots": "res://scenes/menus/save_slots.tscn",
+	&"soc": "res://scenes/soc/soc_shell.tscn",
 }
 
 var current_id: StringName = &""

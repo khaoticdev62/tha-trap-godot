@@ -2,7 +2,7 @@
 
 A single-player, story-driven cybersecurity career RPG built in Godot 4. Learn. Defend. Level Up.
 
-**Status:** Phase 1 (Foundation) in progress. Boots to a working title screen with save/load, an accessibility Settings screen and a character creator, and the dialogue box component (not yet used by a story scene). There is no world, campaign or lab yet. See the production specs in `docs/spec/` (`00`–`10`) for the full design and `docs/audits`, `docs/architecture`, `docs/production` for the Phase 1 audit and plan.
+**Status:** Phase 1 (Foundation) in progress. Boots to a working title screen with save/load, an accessibility Settings screen and a character creator, the dialogue box component (not yet used by a story scene), and a SOC Console (six screens over the LAB-001 case, opened from the title menu). There is no world or campaign yet; LAB-001 is playable through the SOC screens and the terminal but has no story framing. See the production specs in `docs/spec/` (`00`–`10`) for the full design and `docs/audits`, `docs/architecture`, `docs/production` for the Phase 1 audit and plan.
 
 ## Requirements
 - Godot 4.7.2 stable (standard build, not .NET). Pinned for reproducibility; bump deliberately.
