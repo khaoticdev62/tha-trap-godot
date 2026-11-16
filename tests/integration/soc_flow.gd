@@ -287,6 +287,11 @@ func _check_terminal() -> void:
 	var screen: Control = _shell.screen_node(&"terminal")
 	_check(not screen._output.bbcode_enabled, "terminal output has BBCode disabled")
 	_check(screen.output_text().contains("SIMULATED"), "the terminal opens with the SIMULATED banner")
+	var banner_found: bool = false
+	for label_node: Node in screen.find_children("*", "Label", true, false):
+		if (label_node as Label).text == TerminalCommands.BANNER and label_node.is_visible_in_tree():
+			banner_found = true
+	_check(banner_found, "the screen always shows '%s' (spec 05 §5)" % TerminalCommands.BANNER)
 	for line: String in ["help", "assets list", "hosts show HOST-014", "logs search source=auth user=jsmith after=09:00", "timeline build CASE-001", "case report CASE-001"]:
 		screen.run_line(line)
 	await _frames()

@@ -71,8 +71,8 @@
 		}
 	],
 	"career_preview": [
-		{"stage": "Where you are now", "title": "Foundations", "note": "Reading logs, collecting evidence and writing an honest case file."},
-		{"stage": "Next in the story", "title": "Endpoint and identity defense", "note": "Following a sign-in story across devices, accounts and directory changes."},
-		{"stage": "Later in the story", "title": "Incident coordination", "note": "Leading a response with other teams while keeping the record clear."}
+		{"stage": "Stage 2 (you are here)", "title": "SOC Foundations", "note": "Logs, alerts, triage, SIEM, ticketing and escalation. Capstone: investigate a suspicious sign-in."},
+		{"stage": "Stage 3 (next)", "title": "Endpoint & Identity Defense", "note": "EDR concepts, Windows events, directory services, MFA and privilege. Capstone: reconstruct an endpoint and identity incident."},
+		{"stage": "Stage 4 (later)", "title": "Threat Hunting & IR", "note": "Hypotheses, timelines, evidence, containment and recovery across several sources."}
 	]
 }

@@ -448,6 +448,11 @@ func impact_lines() -> PackedStringArray:
 
 # --- terminal ---------------------------------------------------------------------
 
+## The banner spec 05 §5 requires the lab shell to always show.
+static func terminal_banner() -> String:
+	return TerminalCommands.BANNER
+
+
 ## Runs one line through the allowlisted parser. Output is plain text lines.
 func run_command(line: String) -> TerminalResult:
 	var result: TerminalResult = terminal.run(line)

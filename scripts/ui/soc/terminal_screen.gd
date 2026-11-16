@@ -9,6 +9,8 @@ extends SocScreen
 ## without typing, and Up/Down in the input line walks the command history.
 
 const MAX_KEPT_LINES: int = 500
+## A D-pad press scrolls the console by this fraction of a page.
+const PAD_SCROLL_FRACTION: float = 4.0
 const PROMPT: String = "analyst@new-meridian:~$ "
 const BANNER_LINES: PackedStringArray = [
 	"SIMULATED TERMINAL. Synthetic training data only.",
@@ -38,7 +40,11 @@ func screen_context() -> String:
 func build() -> void:
 	var banner: PanelContainer = PanelContainer.new()
 	banner.theme_type_variation = &"ElevatedPanel"
-	banner.add_child(UiKit.label("SIMULATED: allowlisted commands over synthetic data. No real shell, files or network.", &"SocMono"))
+	# Always visible (spec 05 §5): the exact banner text, then what it means.
+	var banner_text: VBoxContainer = UiKit.vbox(2)
+	banner_text.add_child(UiKit.label(SocModel.terminal_banner(), &"SocMono"))
+	banner_text.add_child(UiKit.label("Allowlisted commands over synthetic data. No real shell, files or network.", &"SocCaption"))
+	banner.add_child(banner_text)
 	_page.add_child(banner)
 
 	var columns: HFlowContainer = UiKit.flow()
@@ -55,6 +61,7 @@ func build() -> void:
 	_output.custom_minimum_size = Vector2(0, 300)
 	_output.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_output.tooltip_text = "Command output. Use Up and Down to scroll when focused."
+	_output.gui_input.connect(_on_output_gui_input)
 	console.body.add_child(_output)
 	var input_row: HFlowContainer = UiKit.flow(SocTokens.SPACE_S)
 	console.body.add_child(input_row)
@@ -122,6 +129,9 @@ func _on_input_gui_input(event: InputEvent) -> void:
 	if history.is_empty():
 		return
 	if event.is_action_pressed(&"ui_up"):
+		# At the oldest entry, Up is not ours: let focus move out of the field.
+		if _history_cursor <= 0:
+			return
 		_history_cursor = maxi(_history_cursor - 1, 0)
 		_command_line.text = history[_history_cursor]
 		_command_line.caret_column = _command_line.text.length()
@@ -131,6 +141,28 @@ func _on_input_gui_input(event: InputEvent) -> void:
 		_command_line.text = history[_history_cursor] if _history_cursor < history.size() else ""
 		_command_line.caret_column = _command_line.text.length()
 		_command_line.accept_event()
+
+
+## The engine scrolls a focused RichTextLabel only for keyboard keys, so a D-pad or
+## stick would do nothing. Scroll for those here, and at either end let the event
+## through so focus can move on (never a trap).
+func _on_output_gui_input(event: InputEvent) -> void:
+	if event is InputEventKey or event is InputEventMouse:
+		return
+	var direction: int = 0
+	if event.is_action_pressed(&"ui_up", true):
+		direction = -1
+	elif event.is_action_pressed(&"ui_down", true):
+		direction = 1
+	if direction == 0:
+		return
+	var bar: VScrollBar = _output.get_v_scroll_bar()
+	var at_top: bool = bar.value <= bar.min_value
+	var at_bottom: bool = bar.value >= bar.max_value - bar.page - 0.5
+	if (direction < 0 and at_top) or (direction > 0 and at_bottom):
+		return
+	bar.value += direction * bar.page / PAD_SCROLL_FRACTION
+	_output.accept_event()
 
 
 func _add_line(text: String, role: String) -> void:

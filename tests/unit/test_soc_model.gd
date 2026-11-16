@@ -237,6 +237,11 @@ func test_progress_resumes_from_the_checkpoint() -> void:
 	restored.free()
 
 
+func test_terminal_banner_is_the_one_the_spec_requires() -> void:
+	check_eq(SocModel.terminal_banner(), TerminalCommands.BANNER, "the banner comes from the terminal's own constant")
+	check(SocModel.terminal_banner().contains("SIMULATED ENVIRONMENT") and SocModel.terminal_banner().contains("NO HOST COMMANDS"), "and says SIMULATED ENVIRONMENT and NO HOST COMMANDS (spec 05 §5)")
+
+
 func test_a_broken_content_set_fails_safely() -> void:
 	var registry: ContentRegistry = ContentCatalog.build_registry()
 	var spare: ProgressService = ProgressService.new()

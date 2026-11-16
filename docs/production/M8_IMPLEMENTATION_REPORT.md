@@ -6,6 +6,29 @@ Scope: the six SOC screens, shared shell, design system, controller focus, tests
 
 The SOC interface exists as real Godot scenes running over the real simulation. A player opens it from the title menu ("SOC Console"), moves between six screens, filters and selects events, collects evidence, writes notes, applies simulated response actions, runs allowlisted terminal commands, and reads the mission and learning material. Every change goes through `LabSession`, is checkpointed into saved progress, and shows up on every screen. The terminal is the existing sandboxed parser; the interface adds no new way to run anything.
 
+## 1a. Verification status (read this first)
+
+**M8 is built and automatically tested. It is NOT fully verified**, because no physical gamepad or Steam Deck test has been run.
+
+| Question | Answer |
+|---|---|
+| Automated verification passed? | **Yes.** 353 unit and security tests (74,177 assertions), 6 content documents, 8 integration scenes, all 0 failures. Run on the committed code with `tools\run-tests.ps1`, exit code 0. |
+| Manual verification passed? | **No manual test has been run.** None can be claimed. |
+| Manual verification pending? | **Yes, all of it.** 81 cases are written and every result is `Not tested`: [`docs/qa/M8_PHYSICAL_CONTROLLER_TEST_PLAN.md`](../qa/M8_PHYSICAL_CONTROLLER_TEST_PLAN.md) and [`docs/qa/M8_MANUAL_TEST_RECORD.md`](../qa/M8_MANUAL_TEST_RECORD.md) (Windows 11 + gamepad, Steam Deck Game Mode, Steam Deck Desktop Mode, keyboard and mouse regression). |
+| Specification review completed? | **Yes.** All eleven specs were read in full: [`M8_SPECIFICATION_REVIEW.md`](M8_SPECIFICATION_REVIEW.md). |
+| Outstanding defects? | **None open that are known.** Three defects were found by that review and fixed with regression tests (D1 to D3, below). Missing features and spec deviations are listed in the review and in section 7; they are not defects in existing controls. |
+| Known platform limitations? | Left-stick behaviour and real mouse clicks could not be simulated headlessly, so they are untested by automation. Nothing has run on a Steam Deck. Fonts depend on the player's system. See section 7. |
+
+### Defects found and fixed after the first report
+
+| Id | Defect | Fix | Regression test (failed before the fix where noted) |
+|---|---|---|---|
+| D1 | Terminal did not show the banner spec 05 §5 requires | Screen shows `TerminalCommands.BANNER` via `SocModel.terminal_banner()` | `test_soc_model`, `soc_flow` |
+| D2 | D-pad Up was swallowed at the oldest history entry, so focus could not leave the command line upward | Up passes through at the oldest entry | `soc_controller` (failed before) |
+| D3 | D-pad and stick did not scroll the focused console (the engine scrolls it only for keyboard keys) | Screen scrolls for non-key events and passes them on at either end | `soc_controller` (failed before) |
+
+One content mismatch was also fixed: the career preview now uses spec 03 §2's stage names.
+
 ## 2. Screens (all six are scenes that share one theme and shell)
 
 | # | Screen | Scene | What is wired |
@@ -36,9 +59,9 @@ Modified:
 | Command | Result |
 |---|---|
 | `tools\run-tests.ps1` | exit 0 |
-| (unit + security) `godot --headless -s tests/run_tests.gd` | **352 tests, 73,965 assertions, 0 failures** (313 before M8; 39 added) |
+| (unit + security) `godot --headless -s tests/run_tests.gd` | **353 tests, 74,177 assertions, 0 failures** (313 before M8; 40 added) |
 | (content) `tools/content_validator/validate.gd` | **6 documents checked, 0 problems** (5 before; the learning document is the sixth) |
-| (integration) 7 scenes: creator, dialogue, save slots, settings, **soc_flow**, title | all 0 failures |
+| (integration) 8 scenes: creator, dialogue, save slots, settings, **soc_controller**, **soc_flow**, title | all 0 failures |
 | `godot --path . res://tools/visual/capture.tscn -- --out=<dir>` (windowed) | 17 SOC screenshots rendered and inspected |
 | Godot MCP `run_project` on `soc_shell.tscn`, `get_debug_output` | scene ran; no errors; no warnings from new files after two shadowing warnings were fixed; the remaining warnings are the older ones in `scripts/simulation/` and `progress_service.gd` |
 
@@ -46,9 +69,13 @@ Modified:
 
 ## 5. Controller results
 
-Automated, headless: on every screen the default control takes focus; every focusable control has a way out in at least one direction (no traps); the tab order visits every control and returns to the start; Cancel moves focus from a screen to the navigation; `nav_next`/`nav_prev` switch screens; buttons meet the 40 px target height. The terminal is operable without typing via the sample buttons.
+**Automated (headless), event level.** `tests/integration/soc_controller` feeds the real events a gamepad produces (Joypad Button 0, 1, 9, 10, 11, 12) through Godot's normal input path and checks the result. Passing: D-pad Up/Down moves focus between navigation items and moves table selection; A activates the focused navigation item; RB and LB switch screens and wrap; B moves focus from a screen to the navigation and from the navigation to the title; a typed `[` does not switch screens while a text field has focus, and RB/LB still do; D-pad Up/Down recall terminal history and Up at the oldest entry leaves the field; D-pad scrolls the focused console and Up at the top does not hold focus; the dialog opens on A, starts on the safe choice, traps focus, closes on B and returns focus; returning to a screen focuses its default control. The configured InputMap is also asserted: D-pad buttons, Left Stick axes, A, B, LB, RB and a 0.50 stick dead-zone. `soc_flow` additionally checks default focus on every screen, no focus traps, a complete tab order, and that the terminal is operable without typing through the sample buttons.
 
-**Not done:** no physical gamepad or Steam Deck was used. Directional focus on real hardware, stick dead-zones, and the on-screen keyboard are unverified.
+**What this is not.** These are synthetic events, not a controller. They show the bindings reach the controls; they do not show how a pad or a Deck feels or behaves.
+
+**Not verified by automation:** left-stick navigation (synthetic stick events did not register even on stock focus movement, so no assertion was made), real mouse clicks, controller hot-plug, sleep and resume, Steam Input layouts, and the on-screen keyboard.
+
+**Manual:** pending. See the test plan and the record linked in section 1a.
 
 ## 6. Resolution and scale results
 
@@ -56,7 +83,7 @@ Automated layout checks (headless) at 1280x800 and 1280x720, each at 100% and 20
 
 Found by looking at renders rather than by the first tests, and fixed: clipped table columns, a column pushed off the right edge of Case Management, progress text unreadable over the fill (white on cyan, about 1.6:1), screens opening scrolled to the middle, header badges wrapping into a tall stack, invisible palette swatches. The layout test was tightened afterwards so these classes of fault now fail a test.
 
-**Not done:** no 1366x768, 1920x1080 or ultrawide check; no Steam Deck hardware.
+**Not done:** no 1366x768, 1920x1080 or ultrawide check; no Steam Deck hardware. Reading smallest text (14 to 16 px) on the Deck screen is test RES-05.
 
 ## 7. Known defects and limits
 
@@ -68,6 +95,15 @@ Found by looking at renders rather than by the first tests, and fixed: clipped t
 6. Alert counts vary with difficulty and seed (noise); the story alerts are constant.
 7. The SOC has no animation, so reduced motion has nothing to disable; the notification simply replaces its text.
 8. Palette conflict between the brief and the art bible is unresolved (OI-1); fidelity to the missing concept sheet is unverified (OI-6).
+
+Missing features and deviations found by the specification review (not defects in existing controls; full table in `M8_SPECIFICATION_REVIEW.md`):
+
+9. **No UI to write the report summary.** It can only be set with `case report CASE-001 "text"` in the terminal, so a controller-only player cannot earn that rubric criterion without a platform keyboard.
+10. **No autosave.** The SOC checkpoints into saved progress in memory, but nothing writes a save file; progress is lost on quit unless another route saves it. There is no pause or save menu yet.
+11. No "reset lab" action in the SOC (the simulation supports it).
+12. No remappable controls, no glossary, no per-device controller glyphs (the legend is text), no named mastery levels.
+13. The SOC dashboard layout follows the M8 brief, not the layout in spec 05 §5.
+14. The Design System screen is a developer QA reference whose sample buttons only show a notification; decide whether it ships in a release build.
 
 ## 8. Security findings
 
