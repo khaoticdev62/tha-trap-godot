@@ -15,6 +15,8 @@ tools\run-tests.ps1 save_service    # only test files whose name contains the fi
 ```
 Headless runs draw nothing, so UI changes need eyes: `godot --path . res://tools/visual/capture.tscn -- --out=<dir>` opens a real window and saves PNGs of every screen at 1280x800, 1280x720, 200% text and high contrast. Look at them before calling UI work done.
 
+Optional: the community [godot-mcp](https://github.com/Coding-Solo/godot-mcp) server lets an AI assistant launch the editor, run the game in a real window and read debug output (it opens windows by default; it cannot take screenshots, so keep using the capture tool). Setup, once per machine: `claude mcp add godot -e GODOT_PATH=<path to Godot exe> -- npx -y @coding-solo/godot-mcp`, then restart the session. Checked working with Godot 4.7.2 and server v0.1.0; it is a third-party npm package, so review before trusting it on other machines.
+
 `tools/run-tests.ps1` finds Godot via `$env:GODOT`, then `PATH`, then `~\tools\godot`.
 
 ## Layout

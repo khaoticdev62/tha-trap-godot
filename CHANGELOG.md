@@ -15,6 +15,7 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 - Headless unit test runner and a title-screen integration test (`tools/run-tests.ps1`), with a per-scene timeout.
 
 ### Changed
+- EventBus signals annotated `unused_signal` (they are emitted by forwarding in AppBootstrap); a debug run now reports zero engine warnings.
 - Visual review (real renders via `tools/visual/capture.tscn`) found and fixed: modal and dialogue box mis-positioned (anchors without offsets), Settings/Title not scrollable at large text, invisible slider track, unstyled text fields and dropdown popups, toggle state shown only by a tiny icon (now "On/Off" in the label), pillarboxing at 16:9 (stretch aspect is now `expand`), and screens ignoring the high-contrast page colour (`PageBackground`).
 - New Game now goes through the character creator; the profile is written only when the creator finishes, so backing out never destroys an existing save.
 - Pronouns are a fixed list of options rather than free text.
