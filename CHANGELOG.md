@@ -5,6 +5,7 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- License: Apache-2.0 for code (`LICENSE`, `NOTICE`); creative content and names stay all rights reserved (`LICENSES.md`).
 - Phase 1 foundation: Godot 4.7 project (GL Compatibility renderer, 1280x800 base), boot flow, EventBus, SceneFlow with an id registry, SaveService (atomic writes, verification, rotating backups, checksums, schema migrations, corruption recovery), PlayerProfile with strict sanitising, local redacting diagnostics, controller-complete input actions, and a functional title screen (Continue / New Game / Quit).
 - UI foundation: palette-driven global Theme (scalable text 75-200%, high-contrast scheme, thick shape-based focus rings), persisted AccessibilitySettings (`user://settings.json`, atomic writes, corrupt files fall back to defaults), `motion_duration()` for reduced motion, and a working Settings screen reachable from the title screen (ui_cancel / B goes back).
 - Reusable `ModalDialog` (focus trapped between its buttons, starts on the safe choice, ui_cancel cancels, focus returns to the opener) used for the start-over confirmation.

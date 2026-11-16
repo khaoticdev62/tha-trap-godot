@@ -39,3 +39,6 @@ tools/             run-tests.ps1
 - Typed GDScript. Tests extend `TestCase`, are named `test_*`, and must make at least one assertion.
 - Change the save layout only by bumping `AppConfig.SAVE_SCHEMA_VERSION` and registering a step in `SaveMigrations`.
 - Never use `OS.execute`, `eval`-style execution, or the network from game or lab code (see spec `04` §1).
+
+## License
+Code: [Apache-2.0](LICENSE). Story, characters, art, audio, curriculum and the project names: all rights reserved. See [LICENSES.md](LICENSES.md).
