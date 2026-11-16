@@ -37,4 +37,6 @@ jobs:
 
       - name: Integration tests
         run: |
-          "$RUNNER_TEMP/godot" --headless --path . res://tests/integration/title_flow.tscn
+          for scene in tests/integration/*.tscn; do
+            "$RUNNER_TEMP/godot" --headless --path . "res://$scene"
+          done

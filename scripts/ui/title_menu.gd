@@ -1,12 +1,10 @@
 extends Control
-## Title screen: Continue / New Game / Quit, fully operable by controller.
-## Phase-1 scope: one save slot (slot 0). Settings, credits and the character
-## creator arrive with the UI system (Prompt 3); they are not faked here.
+## Title screen: Continue / New Game / Settings / Quit, fully operable by
+## controller. Phase-1 scope: one save slot (slot 0). Credits and the character
+## creator arrive with the rest of the UI system; they are not faked here.
 
 const PRIMARY_SLOT: int = 0
-const BUTTON_MIN_SIZE: Vector2 = Vector2(420, 64)
-const BODY_FONT_SIZE: int = 26
-const TITLE_FONT_SIZE: int = 64
+const BUTTON_WIDTH: float = 420.0
 
 var _save: SaveService
 var _profile: ProfileService
@@ -14,11 +12,9 @@ var _profile: ProfileService
 var _menu: VBoxContainer
 var _continue_button: Button
 var _new_game_button: Button
-var _quit_button: Button
 var _status: Label
 var _confirm_box: VBoxContainer
 var _confirm_no: Button
-var _confirm_yes: Button
 
 
 func _ready() -> void:
@@ -44,8 +40,8 @@ func _build_ui() -> void:
 	column.add_theme_constant_override("separation", 16)
 	center.add_child(column)
 
-	column.add_child(_make_label(AppConfig.GAME_TITLE, TITLE_FONT_SIZE, Palette.ELECTRIC_LILAC))
-	column.add_child(_make_label(AppConfig.GAME_TAGLINE, BODY_FONT_SIZE, Palette.STREETLIGHT_GOLD))
+	column.add_child(_label(AppConfig.GAME_TITLE, &"TitleLabel"))
+	column.add_child(_label(AppConfig.GAME_TAGLINE, &"HeadingLabel"))
 	column.add_child(_spacer(24))
 
 	_menu = VBoxContainer.new()
@@ -53,30 +49,33 @@ func _build_ui() -> void:
 	column.add_child(_menu)
 	_continue_button = _add_button(_menu, "Continue", _on_continue_pressed)
 	_new_game_button = _add_button(_menu, "New Game", _on_new_game_pressed)
-	_quit_button = _add_button(_menu, "Quit", _on_quit_pressed)
+	_add_button(_menu, "Settings", _on_settings_pressed)
+	_add_button(_menu, "Quit", _on_quit_pressed)
 
 	_confirm_box = VBoxContainer.new()
 	_confirm_box.add_theme_constant_override("separation", 12)
 	_confirm_box.visible = false
 	column.add_child(_confirm_box)
-	_confirm_box.add_child(_make_label("Start over? This replaces your saved progress.", BODY_FONT_SIZE, Palette.WARM_WHITE))
+	var warning: Label = _label("Start over? This replaces your saved progress.", &"")
+	warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_confirm_box.add_child(warning)
 	_confirm_no = _add_button(_confirm_box, "Keep my save", _on_confirm_no)
-	_confirm_yes = _add_button(_confirm_box, "Replace save and start new", _on_confirm_yes)
+	_add_button(_confirm_box, "Replace save and start new", _on_confirm_yes)
 
 	column.add_child(_spacer(16))
-	_status = _make_label("", BODY_FONT_SIZE, Palette.MUTED_SLATE)
+	_status = _label("", &"MutedLabel")
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.custom_minimum_size = Vector2(760, 0)
 	column.add_child(_status)
-	column.add_child(_make_label("v%s" % AppConfig.VERSION, 20, Palette.MUTED_SLATE))
+	column.add_child(_label("v%s" % AppConfig.VERSION, &"MutedLabel"))
 
 
-func _make_label(text: String, size: int, color: Color) -> Label:
+func _label(text: String, variation: StringName) -> Label:
 	var label: Label = Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override("font_size", size)
-	label.add_theme_color_override("font_color", color)
+	if variation != &"":
+		label.theme_type_variation = variation
 	return label
 
 
@@ -89,9 +88,8 @@ func _spacer(height: float) -> Control:
 func _add_button(parent: Control, text: String, handler: Callable) -> Button:
 	var button: Button = Button.new()
 	button.text = text
-	button.custom_minimum_size = BUTTON_MIN_SIZE
+	button.custom_minimum_size = Vector2(BUTTON_WIDTH, UiTheme.MIN_TARGET_HEIGHT)
 	button.focus_mode = Control.FOCUS_ALL
-	button.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
 	button.pressed.connect(handler)
 	parent.add_child(button)
 	return button
@@ -136,6 +134,10 @@ func _on_new_game_pressed() -> void:
 		_show_confirm(true)
 		return
 	_start_new_game()
+
+
+func _on_settings_pressed() -> void:
+	get_node("/root/Scenes").go_to(&"settings")
 
 
 func _on_confirm_no() -> void:

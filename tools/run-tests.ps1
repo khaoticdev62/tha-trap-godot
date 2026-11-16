@@ -24,9 +24,20 @@ if ($Filter) { $extra = @("--", $Filter) }
 & $godot --headless --path $project -s tests/run_tests.gd @extra
 $unitExit = $LASTEXITCODE
 
-# Integration: boots the real autoloads and drives the title screen.
-& $godot --headless --path $project res://tests/integration/title_flow.tscn
-$integrationExit = $LASTEXITCODE
+# Integration: each scene boots the real autoloads and drives the UI.
+$integrationFailed = $false
+foreach ($scene in Get-ChildItem (Join-Path $project "tests/integration/*.tscn") | Sort-Object Name) {
+    Write-Host "== integration: $($scene.Name)"
+    $proc = Start-Process -FilePath $godot -NoNewWindow -PassThru -ArgumentList @("--headless", "--path", "`"$project`"", "res://tests/integration/$($scene.Name)")
+    $null = $proc.Handle   # cache the handle so ExitCode is readable after exit
+    if (-not $proc.WaitForExit(60000)) {
+        $proc.Kill()
+        Write-Host "FAIL  $($scene.Name) timed out after 60s"
+        $integrationFailed = $true
+    } elseif ($proc.ExitCode -ne 0) {
+        $integrationFailed = $true
+    }
+}
 
-if ($unitExit -ne 0 -or $integrationExit -ne 0) { exit 1 }
+if ($unitExit -ne 0 -or $integrationFailed) { exit 1 }
 exit 0

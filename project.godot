@@ -15,6 +15,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 EventBus="*res://scripts/core/event_bus.gd"
 Diagnostics="*res://scripts/core/diagnostics_service.gd"
+Settings="*res://scripts/core/settings_service.gd"
 Saves="*res://scripts/save/save_service.gd"
 Profiles="*res://scripts/core/profile_service.gd"
 Scenes="*res://scripts/core/scene_flow.gd"

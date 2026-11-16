@@ -10,6 +10,7 @@ signal scene_changed(scene_id: StringName)
 const SCENES: Dictionary = {
 	&"boot": "res://scenes/boot/boot.tscn",
 	&"title": "res://scenes/menus/title.tscn",
+	&"settings": "res://scenes/menus/settings.tscn",
 }
 
 var current_id: StringName = &""
