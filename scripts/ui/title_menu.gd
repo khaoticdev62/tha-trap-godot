@@ -1,26 +1,27 @@
 extends Control
-## Title screen: Continue / New Game / Settings / Quit, fully operable by
-## controller. Phase-1 scope: one save slot (slot 0). New Game goes through the
-## character creator; starting over an existing save asks first (ModalDialog).
-## Credits arrive with the rest of the UI system; they are not faked here.
+## Title screen: Continue / New Game / Load Game / Settings / Quit, fully
+## operable by controller. Continue loads the most recently saved slot. New Game
+## and Load Game open the slot screen. Credits arrive with the rest of the UI
+## system; they are not faked here.
 
-const PRIMARY_SLOT: int = 0
 const BUTTON_WIDTH: float = 420.0
 const SCREEN_MARGIN: int = 32
 
-var _save: SaveService
-var _profile: ProfileService
+var _game: SaveGame
+var _progress: ProgressService
+var _recent_slot: int = -1
 
 var _continue_button: Button
 var _new_game_button: Button
+var _load_button: Button
 var _status: Label
 
 
 func _ready() -> void:
-	_save = get_node("/root/Saves")
-	_profile = get_node("/root/Profiles")
+	_game = SaveGame.from_tree(get_tree())
+	_progress = get_node("/root/Progress")
 	_build_ui()
-	_refresh_continue_state()
+	_refresh_save_state()
 	_focus_first_available()
 
 
@@ -57,6 +58,7 @@ func _build_ui() -> void:
 	column.add_child(menu)
 	_continue_button = _add_button(menu, "Continue", _on_continue_pressed)
 	_new_game_button = _add_button(menu, "New Game", _on_new_game_pressed)
+	_load_button = _add_button(menu, "Load Game", _on_load_game_pressed)
 	_add_button(menu, "Settings", _on_settings_pressed)
 	_add_button(menu, "Quit", _on_quit_pressed)
 
@@ -93,16 +95,22 @@ func _add_button(parent: Control, text: String, handler: Callable) -> Button:
 	return button
 
 
-func _refresh_continue_state() -> void:
-	var peek: SaveResult = _save.read_slot(PRIMARY_SLOT)
-	_continue_button.disabled = not peek.ok
-	if peek.ok:
-		_continue_button.text = "Continue"
-	elif peek.code == SaveResult.Code.NOT_FOUND:
-		_continue_button.text = "Continue (no save yet)"
-	else:
-		_continue_button.text = "Continue (save unavailable)"
-		_set_status(peek.message)
+## Continue follows the most recent usable save; Load Game is available whenever
+## any slot holds a file, so a damaged one can still be seen and deleted.
+func _refresh_save_state() -> void:
+	_recent_slot = _game.most_recent_slot()
+	var any_file: bool = false
+	var damaged: int = 0
+	for summary: SlotSummary in _game.summaries():
+		if summary.exists:
+			any_file = true
+			if not summary.usable:
+				damaged += 1
+	_continue_button.disabled = _recent_slot < 0
+	_continue_button.text = "Continue" if _recent_slot >= 0 else ("Continue (no usable save)" if any_file else "Continue (no save yet)")
+	_load_button.disabled = not any_file
+	if damaged > 0:
+		_set_status("%d save slot%s cannot be loaded. Open Load Game to see why or delete %s." % [damaged, "" if damaged == 1 else "s", "it" if damaged == 1 else "them"])
 
 
 func _focus_first_available() -> void:
@@ -117,36 +125,30 @@ func _set_status(text: String) -> void:
 
 
 func _on_continue_pressed() -> void:
-	var result: SaveResult = _save.load_slot(PRIMARY_SLOT)
+	var result: SaveResult = _game.load_slot(_recent_slot)
 	if not result.ok:
 		_set_status(result.message)
-		_refresh_continue_state()
+		_refresh_save_state()
 		return
-	var profile: PlayerProfile = _profile.load_from_payload(result.payload)
 	var note: String = " (restored from backup)" if result.recovered_from_backup else ""
-	_set_status("Welcome back, %s%s. The world map is not built yet." % [profile.display_name, note])
+	_set_status("Welcome back, %s%s. The world map is not built yet." % [get_node("/root/Profiles").current.display_name, note])
 
 
 func _on_new_game_pressed() -> void:
-	if not _save.has_save(PRIMARY_SLOT):
-		_open_creator()
-		return
-	var dialog: ModalDialog = ModalDialog.open(
-		self,
-		"Start over?",
-		"Creating a new character replaces your saved progress.",
-		"Replace save and start new",
-		"Keep my save",
-	)
-	dialog.confirmed.connect(_open_creator)
+	_open_slots("new")
+
+
+func _on_load_game_pressed() -> void:
+	_open_slots("load")
+
+
+func _open_slots(mode: String) -> void:
+	_progress.slot_screen_mode = mode
+	get_node("/root/Scenes").go_to(&"save_slots")
 
 
 func _on_settings_pressed() -> void:
 	get_node("/root/Scenes").go_to(&"settings")
-
-
-func _open_creator() -> void:
-	get_node("/root/Scenes").go_to(&"creator")
 
 
 func _on_quit_pressed() -> void:

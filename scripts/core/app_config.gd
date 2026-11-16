@@ -8,7 +8,7 @@ const VERSION: String = "0.1.0"
 
 ## Bump when the on-disk save envelope or payload layout changes, and add a
 ## matching step in SaveMigrations.
-const SAVE_SCHEMA_VERSION: int = 1
+const SAVE_SCHEMA_VERSION: int = 2
 const SAVE_SLOT_COUNT: int = 3
 const SAVE_BACKUP_COUNT: int = 2
 const SAVE_DIR: String = "user://saves"

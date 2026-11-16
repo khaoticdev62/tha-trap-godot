@@ -1,0 +1,8 @@
+{
+	"schema_version": 1,
+	"id": "mission_lab_001",
+	"lab_key": "lab_001",
+	"title": "Somebody's In The Network",
+	"summary": "A Market Row credit union reports a member account takeover. Work out what happened, what is affected and what should happen next.",
+	"prerequisites": []
+}

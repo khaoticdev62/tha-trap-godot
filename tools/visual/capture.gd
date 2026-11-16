@@ -33,6 +33,7 @@ func _ready() -> void:
 	settings.settings_path = "user://capture_settings_%d.json" % temp_tag
 	saves.save_dir = "user://capture_saves_%d" % temp_tag
 	AppBootstrap.run(tree)
+	_make_sample_saves(saves)
 
 	# name, scene id, window key, text scale, high contrast
 	var cases: Array = [
@@ -48,6 +49,11 @@ func _ready() -> void:
 		["creator_720", &"creator", "720", 1.0, false],
 		["creator_scale200", &"creator", "720", 2.0, false],
 		["creator_contrast", &"creator", "800", 1.0, true],
+		["slots_load_800", &"save_slots", "800", 1.0, false],
+		["slots_load_720", &"save_slots", "720", 1.0, false],
+		["slots_load_scale200", &"save_slots", "720", 2.0, false],
+		["slots_load_contrast", &"save_slots", "800", 1.0, true],
+		["slots_new_800", &"save_slots", "800", 1.0, false],
 	]
 	for entry: Array in cases:
 		await _capture_scene(entry[0], entry[1], entry[2], entry[3], entry[4], settings)
@@ -82,6 +88,7 @@ func _save_png(file_name: String) -> void:
 
 func _capture_scene(file_name: String, scene_id: StringName, size_key: String, scale: float, contrast: bool, settings: SettingsService) -> void:
 	_apply(settings, size_key, scale, contrast)
+	get_tree().root.get_node("Progress").slot_screen_mode = "new" if file_name.contains("_new") else "load"
 	var scene: Node = load(SceneFlow.path_for(scene_id)).instantiate()
 	get_tree().root.add_child(scene)
 	await _settle()
@@ -121,3 +128,23 @@ func _capture_dialogue(settings: SettingsService, file_name: String, with_choice
 	_save_png(file_name)
 	backdrop.queue_free()
 	await get_tree().process_frame
+
+
+## One healthy slot (with a completed mission), one empty, one damaged, so the
+## title and slot screens show every state.
+func _make_sample_saves(saves: SaveService) -> void:
+	var root: Window = get_tree().root
+	var game: SaveGame = SaveGame.from_tree(get_tree())
+	game.fixed_unix_time = 100
+	game.start_new(0, "Kai Lee", "they/them", "tone_tan", "hair_locs", "outfit_copper")
+	root.get_node("Profiles").current.playtime_seconds = 3900.0
+	var progress: ProgressService = root.get_node("Progress")
+	var content: LabContent = LabContent.load_lab(ContentLoader.new(ContentCatalog.build_registry()), "lab_001")
+	progress.begin_lab("mission_lab_001", content)
+	var done: AssessmentResult = AssessmentResult.new()
+	done.total = 92
+	done.passed = true
+	done.rubric_version = "1.0.0"
+	progress.finish_lab(done)
+	game.save(0)
+	saves.save_slot(2, {"profile": {}, "progress": {"version": 1, "difficulty": "nightmare"}, "meta": {}})

@@ -145,6 +145,21 @@ const HINTS_SCHEMA: Dictionary = {
 	},
 }
 
+## Missions this build ships (content ids).
+const MISSION_IDS: Array[String] = ["mission_lab_001"]
+
+const MISSION_SCHEMA: Dictionary = {
+	"type": "object",
+	"fields": {
+		"schema_version": {"type": "int", "required": true, "min": 1},
+		"id": {"type": "id", "required": true},
+		"lab_key": {"type": "id", "required": true},
+		"title": {"type": "string", "required": true, "max_length": 80},
+		"summary": {"type": "string", "required": true, "max_length": 300},
+		"prerequisites": {"type": "array", "required": true, "max_items": 10, "items": {"type": "id"}},
+	},
+}
+
 const _LEVEL_COUNTS_SCHEMA: Dictionary = {
 	"type": "object",
 	"fields": {
@@ -196,6 +211,8 @@ static func build_registry() -> ContentRegistry:
 	assert(outcome.ok(), "ContentCatalog registration failed: %s" % str(outcome.errors))
 	outcome = registry.register("lab_001_hints", "labs/lab_001/hints.json", HINTS_SCHEMA, 1)
 	assert(outcome.ok(), "ContentCatalog registration failed: %s" % str(outcome.errors))
+	outcome = registry.register("mission_lab_001", "missions/mission_lab_001.json", MISSION_SCHEMA, 1)
+	assert(outcome.ok(), "ContentCatalog registration failed: %s" % str(outcome.errors))
 	return registry
 
 
@@ -210,7 +227,42 @@ static func validate_everything(loader: ContentLoader) -> ContentResult:
 	if scenario.ok() and rubric.ok() and hints.ok():
 		for message: String in lab_cross_problems(scenario.data, rubric.data, hints.data):
 			combined.add("lab_001", message)
+	var missions: Dictionary = {}
+	for mission_id: String in MISSION_IDS:
+		var loaded: ContentResult = loader.load_content(mission_id)
+		if loaded.ok():
+			missions[mission_id] = loaded.data
+	for message: String in mission_problems(missions, PackedStringArray(MISSION_IDS)):
+		combined.add("missions", message)
 	return combined
+
+
+## Rules across missions: prerequisites must name real missions, nothing may be
+## its own prerequisite (directly or through a chain), and each mission must
+## point at a lab whose documents are registered.
+static func mission_problems(missions: Dictionary, known_ids: PackedStringArray) -> PackedStringArray:
+	var problems: PackedStringArray = PackedStringArray()
+	for mission_id: String in missions:
+		var document: Dictionary = missions[mission_id]
+		for prerequisite: Variant in document.get("prerequisites", []):
+			if not known_ids.has(str(prerequisite)):
+				problems.append("%s: prerequisite '%s' is not a known mission" % [mission_id, str(prerequisite)])
+		if _reaches(missions, mission_id, mission_id, {}):
+			problems.append("%s: prerequisites loop back to the mission itself" % mission_id)
+		var lab_key: String = str(document.get("lab_key", ""))
+		if lab_key.is_empty() or not build_registry().has_entry("%s_manifest" % lab_key) or not build_registry().has_entry("%s_scenario" % lab_key):
+			problems.append("%s: lab '%s' has no registered content" % [mission_id, lab_key])
+	return problems
+
+
+static func _reaches(missions: Dictionary, from_id: String, target: String, visited: Dictionary) -> bool:
+	if visited.has(from_id) or not missions.has(from_id):
+		return false
+	visited[from_id] = true
+	for prerequisite: Variant in (missions[from_id] as Dictionary).get("prerequisites", []):
+		if str(prerequisite) == target or _reaches(missions, str(prerequisite), target, visited):
+			return true
+	return false
 
 
 ## Cross-document rules for one lab. Empty when the documents agree.

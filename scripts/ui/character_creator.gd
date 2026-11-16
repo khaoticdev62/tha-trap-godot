@@ -4,13 +4,13 @@ extends Control
 ## option (colour swatches are never the only signal). Operable by keyboard and
 ## controller; the form scrolls so it stays usable at large text sizes.
 
-const PRIMARY_SLOT: int = 0
 const FORM_WIDTH: float = 640.0
 const SWATCH_SIZE: Vector2 = Vector2(48, 48)
 const SCREEN_MARGIN: int = 32
 
 var _profiles: ProfileService
-var _saves: SaveService
+var _game: SaveGame
+var _progress: ProgressService
 
 var _name_edit: LineEdit
 var _pronouns: OptionButton
@@ -24,7 +24,8 @@ var _status: Label
 
 func _ready() -> void:
 	_profiles = get_node("/root/Profiles")
-	_saves = get_node("/root/Saves")
+	_game = SaveGame.from_tree(get_tree())
+	_progress = get_node("/root/Progress")
 	_build_ui()
 	_refresh_swatches()
 	_name_edit.grab_focus()
@@ -150,18 +151,18 @@ func _refresh_swatches() -> void:
 
 
 func _on_start_pressed() -> void:
-	var profile: PlayerProfile = _profiles.create(
+	var result: SaveResult = _game.start_new(
+		_progress.active_slot,
 		_name_edit.text,
 		_selected_id(_pronouns),
 		_selected_id(_skin),
 		_selected_id(_hair),
 		_selected_id(_outfit),
 	)
-	var result: SaveResult = _saves.save_slot(PRIMARY_SLOT, _profiles.to_payload())
 	if not result.ok:
 		_status.text = "Could not create your save: %s" % result.message
 		return
-	_status.text = "Welcome, %s." % profile.display_name
+	_status.text = "Welcome, %s." % _profiles.current.display_name
 	get_node("/root/Scenes").go_to(&"title")
 
 

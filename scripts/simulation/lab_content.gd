@@ -4,6 +4,8 @@ extends RefCounted
 ## and the hints. Use new_session() to start an attempt with scoring and hints
 ## attached.
 
+## Content prefix, for example "lab_001".
+var lab_key: String = ""
 var package: ScenarioPackage = null
 var rubric: Rubric = null
 var hints: HintSet = null
@@ -14,6 +16,7 @@ var errors: PackedStringArray = PackedStringArray()
 ## `lab_key` is the content prefix, for example "lab_001".
 static func load_lab(loader: ContentLoader, lab_key: String) -> LabContent:
 	var content: LabContent = LabContent.new()
+	content.lab_key = lab_key
 	var scenario: ContentResult = loader.load_content("%s_scenario" % lab_key)
 	var rubric_result: ContentResult = loader.load_content("%s_rubric" % lab_key)
 	var hints_result: ContentResult = loader.load_content("%s_hints" % lab_key)

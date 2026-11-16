@@ -24,3 +24,8 @@ signal profile_changed(profile: PlayerProfile)
 signal scene_requested(scene_id: StringName)
 @warning_ignore("unused_signal")
 signal scene_changed(scene_id: StringName)
+
+@warning_ignore("unused_signal")
+signal progress_changed
+@warning_ignore("unused_signal")
+signal mission_state_changed(mission_id: String, state: String)

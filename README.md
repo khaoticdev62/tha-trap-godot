@@ -25,10 +25,14 @@ Local test gate: run `tools\install-hooks.ps1` once; `git push` then runs the fu
 ```
 scripts/core/      AppConfig, Validate, CharacterOptions, AccessibilitySettings, SettingsService, EventBus, SceneFlow, ProfileService, PlayerProfile, DiagnosticsService, AppBootstrap
 scripts/save/      SaveService, SaveResult, SaveMigrations
+scripts/data/      ContentLoader, ContentRegistry, ContentCatalog, SchemaValidator (validated, versioned content under data/)
+scripts/simulation/ the lab engine: events, LabSession, query engine, sandboxed terminal, evidence and case, assessment, hints, report (no UI, no clock, no files, no network)
+scripts/gameplay/  ProgressService, MissionService, SaveGame, SlotSummary, PortfolioExporter
 scripts/platform/  InputActions (keyboard + controller bindings)
-scripts/ui/        Palette tokens, UiTheme, ModalDialog, DialogueBox, Typewriter, HintBar, boot, title, settings and character-creator screens
+scripts/ui/        Palette tokens, UiTheme, ModalDialog, DialogueBox, Typewriter, HintBar, boot, title, save-slot, settings and character-creator screens
 scenes/            boot/, menus/
 tests/unit/        headless unit tests (test_*.gd, extend TestCase)
+tests/security/    static safety scans and fuzzing of the simulation, terminal and query engine
 tests/integration/ scene-driven checks that need the real autoloads
 tools/             run-tests.ps1, visual/capture.* (screenshot tool)
 ```

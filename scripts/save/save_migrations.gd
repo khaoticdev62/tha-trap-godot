@@ -25,9 +25,21 @@ static func migrate(payload: Dictionary, from_version: int, to_version: int, ste
 	return {"ok": true, "payload": current, "error": ""}
 
 
-## Registered steps, keyed by the version they upgrade FROM. Empty at schema v1.
+## Registered steps, keyed by the version they upgrade FROM.
 static func _steps() -> Dictionary:
-	return {}
+	return {1: _v1_to_v2}
+
+
+## v1 saved only the profile. v2 adds mission progress and save metadata; an
+## empty `progress` means "new game" to the loader, so nothing is lost or
+## invented.
+static func _v1_to_v2(payload: Dictionary) -> Dictionary:
+	var upgraded: Dictionary = payload.duplicate(true)
+	if not upgraded.has("progress"):
+		upgraded["progress"] = {}
+	if not upgraded.has("meta"):
+		upgraded["meta"] = {}
+	return upgraded
 
 
 static func _fail(reason: String) -> Dictionary:
