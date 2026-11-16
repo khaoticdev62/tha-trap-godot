@@ -7,10 +7,15 @@ signal profile_changed(profile: PlayerProfile)
 var current: PlayerProfile = PlayerProfile.new()
 
 
-func start_new(display_name: String) -> PlayerProfile:
-	var fresh: PlayerProfile = PlayerProfile.new()
-	fresh.display_name = PlayerProfile.sanitize_name(display_name, AppConfig.DEFAULT_PROFILE_NAME, AppConfig.PROFILE_NAME_MAX_LENGTH)
-	_set_current(fresh)
+## Builds a validated profile from raw character-creator input.
+func create(display_name: String, pronouns: String, skin_tone: String, hair_style: String, outfit_palette: String) -> PlayerProfile:
+	_set_current(PlayerProfile.from_dict({
+		"display_name": display_name,
+		"pronouns": pronouns,
+		"skin_tone": skin_tone,
+		"hair_style": hair_style,
+		"outfit_palette": outfit_palette,
+	}))
 	return current
 
 

@@ -1,7 +1,8 @@
 extends Control
 ## Title screen: Continue / New Game / Settings / Quit, fully operable by
-## controller. Phase-1 scope: one save slot (slot 0). Credits and the character
-## creator arrive with the rest of the UI system; they are not faked here.
+## controller. Phase-1 scope: one save slot (slot 0). New Game goes through the
+## character creator; starting over an existing save asks first (ModalDialog).
+## Credits arrive with the rest of the UI system; they are not faked here.
 
 const PRIMARY_SLOT: int = 0
 const BUTTON_WIDTH: float = 420.0
@@ -9,12 +10,9 @@ const BUTTON_WIDTH: float = 420.0
 var _save: SaveService
 var _profile: ProfileService
 
-var _menu: VBoxContainer
 var _continue_button: Button
 var _new_game_button: Button
 var _status: Label
-var _confirm_box: VBoxContainer
-var _confirm_no: Button
 
 
 func _ready() -> void:
@@ -44,23 +42,13 @@ func _build_ui() -> void:
 	column.add_child(_label(AppConfig.GAME_TAGLINE, &"HeadingLabel"))
 	column.add_child(_spacer(24))
 
-	_menu = VBoxContainer.new()
-	_menu.add_theme_constant_override("separation", 12)
-	column.add_child(_menu)
-	_continue_button = _add_button(_menu, "Continue", _on_continue_pressed)
-	_new_game_button = _add_button(_menu, "New Game", _on_new_game_pressed)
-	_add_button(_menu, "Settings", _on_settings_pressed)
-	_add_button(_menu, "Quit", _on_quit_pressed)
-
-	_confirm_box = VBoxContainer.new()
-	_confirm_box.add_theme_constant_override("separation", 12)
-	_confirm_box.visible = false
-	column.add_child(_confirm_box)
-	var warning: Label = _label("Start over? This replaces your saved progress.", &"")
-	warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_confirm_box.add_child(warning)
-	_confirm_no = _add_button(_confirm_box, "Keep my save", _on_confirm_no)
-	_add_button(_confirm_box, "Replace save and start new", _on_confirm_yes)
+	var menu: VBoxContainer = VBoxContainer.new()
+	menu.add_theme_constant_override("separation", 12)
+	column.add_child(menu)
+	_continue_button = _add_button(menu, "Continue", _on_continue_pressed)
+	_new_game_button = _add_button(menu, "New Game", _on_new_game_pressed)
+	_add_button(menu, "Settings", _on_settings_pressed)
+	_add_button(menu, "Quit", _on_quit_pressed)
 
 	column.add_child(_spacer(16))
 	_status = _label("", &"MutedLabel")
@@ -130,44 +118,25 @@ func _on_continue_pressed() -> void:
 
 
 func _on_new_game_pressed() -> void:
-	if _save.has_save(PRIMARY_SLOT):
-		_show_confirm(true)
+	if not _save.has_save(PRIMARY_SLOT):
+		_open_creator()
 		return
-	_start_new_game()
+	var dialog: ModalDialog = ModalDialog.open(
+		self,
+		"Start over?",
+		"Creating a new character replaces your saved progress.",
+		"Replace save and start new",
+		"Keep my save",
+	)
+	dialog.confirmed.connect(_open_creator)
 
 
 func _on_settings_pressed() -> void:
 	get_node("/root/Scenes").go_to(&"settings")
 
 
-func _on_confirm_no() -> void:
-	_show_confirm(false)
-
-
-func _on_confirm_yes() -> void:
-	_show_confirm(false)
-	_start_new_game()
-
-
-func _show_confirm(visible_state: bool) -> void:
-	_confirm_box.visible = visible_state
-	_menu.visible = not visible_state
-	if visible_state:
-		# Focus the safe choice first so a stray button press cannot destroy a save.
-		_confirm_no.grab_focus()
-	else:
-		_focus_first_available()
-
-
-func _start_new_game() -> void:
-	var profile: PlayerProfile = _profile.start_new(AppConfig.DEFAULT_PROFILE_NAME)
-	var result: SaveResult = _save.save_slot(PRIMARY_SLOT, _profile.to_payload())
-	if not result.ok:
-		_set_status("Could not create your save: %s" % result.message)
-		return
-	_set_status("New game started as %s. The world map is not built yet." % profile.display_name)
-	_refresh_continue_state()
-	_focus_first_available()
+func _open_creator() -> void:
+	get_node("/root/Scenes").go_to(&"creator")
 
 
 func _on_quit_pressed() -> void:

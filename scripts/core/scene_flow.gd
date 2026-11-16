@@ -11,6 +11,7 @@ const SCENES: Dictionary = {
 	&"boot": "res://scenes/boot/boot.tscn",
 	&"title": "res://scenes/menus/title.tscn",
 	&"settings": "res://scenes/menus/settings.tscn",
+	&"creator": "res://scenes/menus/character_creator.tscn",
 }
 
 var current_id: StringName = &""

@@ -4,12 +4,13 @@ extends RefCounted
 ## outcomes (Game Bible §6). Accessibility preferences live in
 ## AccessibilitySettings, not here, so they work before any save is loaded.
 ## All input is untrusted (it may come from a hand-edited save), so from_dict
-## validates every field.
-
-const MAX_PRONOUNS_LENGTH: int = 24
+## validates every field; option ids are checked against CharacterOptions.
 
 var display_name: String = AppConfig.DEFAULT_PROFILE_NAME
-var pronouns: String = ""
+var pronouns: String = CharacterOptions.PRONOUNS[0]["id"]
+var skin_tone: String = CharacterOptions.SKIN_TONES[0]["id"]
+var hair_style: String = CharacterOptions.HAIR_STYLES[0]["id"]
+var outfit_palette: String = CharacterOptions.OUTFIT_PALETTES[0]["id"]
 var playtime_seconds: float = 0.0
 
 
@@ -17,6 +18,9 @@ func to_dict() -> Dictionary:
 	return {
 		"display_name": display_name,
 		"pronouns": pronouns,
+		"skin_tone": skin_tone,
+		"hair_style": hair_style,
+		"outfit_palette": outfit_palette,
 		"playtime_seconds": playtime_seconds,
 	}
 
@@ -27,7 +31,10 @@ static func from_dict(data: Variant) -> PlayerProfile:
 		return profile
 	var source: Dictionary = data
 	profile.display_name = sanitize_name(source.get("display_name", ""), AppConfig.DEFAULT_PROFILE_NAME, AppConfig.PROFILE_NAME_MAX_LENGTH)
-	profile.pronouns = sanitize_name(source.get("pronouns", ""), "", MAX_PRONOUNS_LENGTH)
+	profile.pronouns = CharacterOptions.valid_id(CharacterOptions.PRONOUNS, source.get("pronouns"))
+	profile.skin_tone = CharacterOptions.valid_id(CharacterOptions.SKIN_TONES, source.get("skin_tone"))
+	profile.hair_style = CharacterOptions.valid_id(CharacterOptions.HAIR_STYLES, source.get("hair_style"))
+	profile.outfit_palette = CharacterOptions.valid_id(CharacterOptions.OUTFIT_PALETTES, source.get("outfit_palette"))
 	profile.playtime_seconds = Validate.clamped_float(source.get("playtime_seconds", 0.0), 0.0, 3.0e8, 0.0)
 	return profile
 

@@ -37,6 +37,32 @@ func test_playtime_is_clamped_and_non_finite_rejected() -> void:
 	check_eq(PlayerProfile.from_dict({"playtime_seconds": 9.9e20}).playtime_seconds, 3.0e8, "huge playtime")
 
 
+func test_character_choices_round_trip() -> void:
+	var profile: PlayerProfile = PlayerProfile.from_dict({
+		"display_name": "Mo", "pronouns": "they/them", "skin_tone": "tone_deep_brown",
+		"hair_style": "hair_locs", "outfit_palette": "outfit_ice_blue",
+	})
+	check_eq(profile.pronouns, "they/them", "pronouns kept")
+	check_eq(profile.skin_tone, "tone_deep_brown", "skin tone kept")
+	check_eq(profile.hair_style, "hair_locs", "hair kept")
+	check_eq(profile.outfit_palette, "outfit_ice_blue", "outfit kept")
+	check_eq(PlayerProfile.from_dict(profile.to_dict()).to_dict(), profile.to_dict(), "lossless")
+
+
+func test_unknown_or_hostile_choice_ids_fall_back_to_defaults() -> void:
+	var defaults: PlayerProfile = PlayerProfile.new()
+	for bad: Variant in ["", "nonsense", "../../etc/passwd", "<b>x</b>", 7, null, [], {"id": "tone_fair"}]:
+		var profile: PlayerProfile = PlayerProfile.from_dict({"skin_tone": bad, "hair_style": bad, "outfit_palette": bad})
+		check_eq(profile.skin_tone, defaults.skin_tone, "skin falls back for %s" % str(bad))
+		check_eq(profile.hair_style, defaults.hair_style, "hair falls back for %s" % str(bad))
+		check_eq(profile.outfit_palette, defaults.outfit_palette, "outfit falls back for %s" % str(bad))
+
+
+func test_free_text_pronouns_are_not_accepted() -> void:
+	check_eq(PlayerProfile.from_dict({"pronouns": "custom text"}).pronouns, "", "only listed pronoun options are valid")
+	check_eq(PlayerProfile.from_dict({"pronouns": "they/them"}).pronouns, "they/them", "listed option is valid")
+
+
 func test_legacy_accessibility_keys_are_ignored() -> void:
 	var profile: PlayerProfile = PlayerProfile.from_dict({"display_name": "Old", "text_scale": 3, "reduced_motion": true})
 	check_eq(profile.display_name, "Old", "known keys still load")

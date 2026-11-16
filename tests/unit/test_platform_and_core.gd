@@ -70,8 +70,9 @@ func test_profile_service_emits_and_round_trips() -> void:
 	var service: ProfileService = ProfileService.new()
 	var changes: Array[int] = []
 	service.profile_changed.connect(func(_p: PlayerProfile) -> void: changes.append(1))
-	service.start_new("  Kai  ")
-	check_eq(service.current.display_name, "Kai", "name sanitised on new game")
+	service.create("  Kai  ", "they/them", "tone_brown", "hair_locs", "outfit_copper")
+	check_eq(service.current.display_name, "Kai", "name sanitised on create")
+	check_eq(service.current.hair_style, "hair_locs", "choices are kept")
 	var payload: Dictionary = service.to_payload()
 	service.load_from_payload({})
 	check_eq(service.current.display_name, AppConfig.DEFAULT_PROFILE_NAME, "empty payload gives defaults")
