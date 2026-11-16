@@ -143,8 +143,13 @@ func test_empty_input_is_quiet() -> void:
 
 func test_commands_do_not_change_the_lab() -> void:
 	var before: String = _session.state_hash()
+	var ran: int = 0
 	for key: String in TerminalCommands.command_keys():
+		if TerminalCommands.TABLE[key].get("mutates", false):
+			continue
 		_terminal.run(TerminalCommands.TABLE[key]["example"])
+		ran += 1
+	check(ran >= 6, "several read-only commands were exercised (%d)" % ran)
 	check_eq(_session.state_hash(), before, "read-only commands never change the lab state")
 
 
@@ -157,3 +162,96 @@ func test_output_is_capped() -> void:
 	check(capped.lines[capped.lines.size() - 1].contains("cut off"), "the cut is announced")
 	for line: String in capped.lines:
 		check(line.length() <= TerminalParser.MAX_LINE_CHARS, "line length capped")
+
+
+# --- commands that build the case -------------------------------------------
+
+func test_collecting_evidence_from_the_terminal() -> void:
+	var added: TerminalResult = _terminal.run("evidence add EVT-004 CASE-001")
+	check(added.ok and _text(added).contains("Added ev_001") and _text(added).contains("EVT-004"), "adds and shows the event: %s" % _text(added))
+	check(_terminal.run("evidence add evt_003 note=\"new source\"").ok, "a note can be attached")
+	check(_text(_terminal.run("evidence list")).contains("new source"), "the note is listed")
+	var again: TerminalResult = _terminal.run("evidence add EVT-004")
+	check(again.ok and _text(again).contains("Already collected"), "repeating is harmless: %s" % _text(again))
+	check_eq(_session.ledger.size(), 2, "two records")
+	check(_session.state_problems().is_empty(), "healthy")
+
+
+func test_evidence_command_errors() -> void:
+	for line: String in ["evidence add", "evidence add EVT-999", "evidence add EVT-001 CASE-002", "evidence add EVT-001 CASE-001 extra",
+			"evidence add EVT-001 note=", "evidence add $x", "evidence remove ev_404", "evidence remove", "evidence list extra"]:
+		var result: TerminalResult = _terminal.run(line)
+		check(not result.ok and not result.lines.is_empty(), "refused with a reason: %s" % line)
+	check_eq(_session.ledger.size(), 0, "nothing was collected")
+	check(_text(_terminal.run("evidence list")).contains("No evidence collected yet"), "an empty list guides the player")
+
+
+func test_case_commands_from_the_terminal() -> void:
+	_terminal.run("evidence add EVT-001")
+	var hypothesis: TerminalResult = _terminal.run('case note CASE-001 "Possible password guessing"')
+	check(hypothesis.ok and _text(hypothesis).contains("hypothesis"), "defaults to a hypothesis: %s" % _text(hypothesis))
+	var bare_fact: TerminalResult = _terminal.run('case note CASE-001 "Failures happened" kind=fact')
+	check(not bare_fact.ok and _text(bare_fact).contains("evidence"), "a fact without evidence is refused: %s" % _text(bare_fact))
+	var fact: TerminalResult = _terminal.run('case note CASE-001 "Failures happened" kind=fact evidence=ev_001')
+	check(fact.ok, "a fact with evidence is accepted: %s" % _text(fact))
+	check(_terminal.run('case note CASE-001 "What was accessed?" kind=UNKNOWN').ok, "kind ignores case")
+	check(_terminal.run("case severity high").ok, "severity")
+	check(_terminal.run("case scope host_014,HOST-022").ok, "scope")
+	var shown: String = _text(_terminal.run("case show"))
+	check(shown.contains("Severity: high") and shown.contains("host_014, host_022"), "case show reports severity and scope: %s" % shown)
+	check(shown.contains("[FACT]") and shown.contains("[HYPOTHESIS]") and shown.contains("[UNKNOWN]") and shown.contains("(ev_001)"), "entries are labelled by kind: %s" % shown)
+
+
+func test_case_command_errors() -> void:
+	for line: String in ['case note CASE-002 "x"', "case note CASE-001", 'case note CASE-001 "x" kind=guess', 'case note CASE-001 "x" evidence=ev_1/2',
+			'case note CASE-001 "x" evidence=nothing', "case severity urgent", "case severity", "case scope", "case scope host_999",
+			"case scope a/b", 'case note CASE-001 "x" colour=red', "case show extra"]:
+		var result: TerminalResult = _terminal.run(line)
+		check(not result.ok and not result.lines.is_empty(), "refused with a reason: %s" % line)
+	check_eq(_session.case_file.entries().size(), 0, "no entries were stored")
+	check(_session.state_problems().is_empty(), "healthy")
+
+
+func test_timeline_command() -> void:
+	check(_text(_terminal.run("timeline build")).contains("No evidence collected yet"), "empty timeline guides the player")
+	_terminal.run("evidence add EVT-003")
+	_terminal.run("evidence add EVT-001")
+	var text: String = _text(_terminal.run("timeline build CASE-001"))
+	check(text.find("EVT-001") < text.find("EVT-003") and text.contains("2 events on the timeline"), "time ordered: %s" % text)
+	check(not _terminal.run("timeline build CASE-009").ok, "only the real case id is accepted")
+
+
+func test_removing_cited_evidence_from_the_terminal() -> void:
+	_terminal.run("evidence add EVT-003")
+	_terminal.run('case note CASE-001 "A new source signed in" kind=fact evidence=ev_001')
+	var blocked: TerminalResult = _terminal.run("evidence remove ev_001")
+	check(not blocked.ok and _text(blocked).contains("ce_001"), "the citing entry is named: %s" % _text(blocked))
+	check_eq(_session.ledger.size(), 1, "the evidence is still there")
+
+
+func test_a_full_lab_001_investigation_through_the_terminal() -> void:
+	var steps: Array[String] = [
+		"logs search source=auth user=j.smith",
+		"evidence add EVT-001 note=\"first failure\"",
+		"evidence add EVT-002",
+		"evidence add EVT-003 note=\"success from a new source\"",
+		"evidence add EVT-004 note=\"new MFA device\"",
+		"evidence add EVT-005",
+		"case note CASE-001 \"Two failed sign-ins were followed by a success from an unfamiliar source.\" kind=fact evidence=ev_001,ev_002,ev_003",
+		"case note CASE-001 \"A new MFA device was requested three minutes after the success.\" kind=fact evidence=ev_004",
+		"case note CASE-001 \"Someone other than the employee may have taken over the account.\" kind=hypothesis",
+		"case note CASE-001 \"Was any member data copied?\" kind=unknown",
+		"case severity high",
+		"case scope host_014,member_portal",
+		"timeline build",
+		"case show",
+	]
+	for line: String in steps:
+		var result: TerminalResult = _terminal.run(line)
+		check(result.ok, "step works: %s -> %s" % [line.left(50), _text(result).left(80)])
+	check_eq(_session.ledger.size(), 5, "five pieces of evidence")
+	check_eq(_session.case_file.entries().size(), 4, "four entries")
+	check(_session.state_problems().is_empty(), "the finished lab is consistent")
+	var restored: LabSession = LabSession.new(_session.package, _session.difficulty, _session.seed_value)
+	check(restored.restore(JSON.parse_string(JSON.stringify(_session.snapshot()))).ok, "and it survives a save and load")
+	check_eq(restored.state_hash(), _session.state_hash(), "with identical state")

@@ -45,6 +45,54 @@ const TABLE: Dictionary = {
 		"positional_min": 0, "positional_max": 0,
 		"options": ["source", "user", "result", "ip", "device", "contains", "after", "before", "limit"],
 	},
+	"evidence add": {
+		"summary": "Collect a log event as evidence.",
+		"usage": "evidence add <event> [CASE-001] [note=\"text\"]",
+		"example": "evidence add EVT-004 CASE-001",
+		"positional_min": 1, "positional_max": 2, "options": ["note"], "mutates": true,
+	},
+	"evidence list": {
+		"summary": "List the evidence you have collected.",
+		"usage": "evidence list",
+		"example": "evidence list",
+		"positional_min": 0, "positional_max": 0, "options": [],
+	},
+	"evidence remove": {
+		"summary": "Remove a piece of evidence that no case entry cites.",
+		"usage": "evidence remove <evidence-id>",
+		"example": "evidence remove ev_001",
+		"positional_min": 1, "positional_max": 1, "options": [], "mutates": true,
+	},
+	"case note": {
+		"summary": "Record a fact, hypothesis or unknown in the case. Facts must cite evidence.",
+		"usage": "case note CASE-001 \"text\" [kind=fact|hypothesis|unknown] [evidence=ev_001,ev_002]",
+		"example": "case note CASE-001 \"Repeated failures then unusual success\"",
+		"positional_min": 2, "positional_max": 2, "options": ["kind", "evidence"], "mutates": true,
+	},
+	"case severity": {
+		"summary": "Set how serious you judge the case to be.",
+		"usage": "case severity <low|medium|high|critical>",
+		"example": "case severity high",
+		"positional_min": 1, "positional_max": 1, "options": [], "mutates": true,
+	},
+	"case scope": {
+		"summary": "List the assets you believe are affected.",
+		"usage": "case scope <asset>[,<asset>...]",
+		"example": "case scope host_014,member_portal",
+		"positional_min": 1, "positional_max": 1, "options": [], "mutates": true,
+	},
+	"case show": {
+		"summary": "Show the case: severity, scope and every entry.",
+		"usage": "case show",
+		"example": "case show",
+		"positional_min": 0, "positional_max": 0, "options": [],
+	},
+	"timeline build": {
+		"summary": "Show your evidence as a timeline.",
+		"usage": "timeline build [CASE-001]",
+		"example": "timeline build",
+		"positional_min": 0, "positional_max": 1, "options": [],
+	},
 }
 
 ## Names of real-computer commands people reach for. They are refused with an

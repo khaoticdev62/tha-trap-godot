@@ -135,6 +135,22 @@ func _dispatch(key: String, positional: PackedStringArray, options: Dictionary) 
 			return _hosts_show(positional[0])
 		"logs search":
 			return _logs_search(options)
+		"evidence add":
+			return _evidence_add(positional, options)
+		"evidence list":
+			return _evidence_list()
+		"evidence remove":
+			return _evidence_remove(positional[0])
+		"case note":
+			return _case_note(positional, options)
+		"case severity":
+			return _case_severity(positional[0])
+		"case scope":
+			return _case_scope(positional[0])
+		"case show":
+			return _case_show()
+		"timeline build":
+			return _timeline_build(positional)
 	return TerminalResult.failure(TerminalResult.Code.UNKNOWN_COMMAND, "Unknown command.")
 
 
@@ -265,7 +281,136 @@ func _logs_search(options: Dictionary) -> TerminalResult:
 	return result
 
 
+# --- handlers that change the case (all go through LabSession) --------------
+
+func _evidence_add(positional: PackedStringArray, options: Dictionary) -> TerminalResult:
+	if not _is_plain_word(positional[0]):
+		return _bad("That is not an event id. Event ids look like EVT-001; logs search shows them.")
+	if positional.size() == 2 and not _is_case_id(positional[1]):
+		return _bad("There is one case in this lab: %s." % CaseFile.CASE_ID)
+	var outcome: ActionResult = _session.add_evidence(PackedStringArray([positional[0]]), String(options.get("note", "")))
+	if not outcome.ok:
+		return _bad(outcome.message)
+	var result: TerminalResult = TerminalResult.new()
+	result.lines.append(outcome.message)
+	var record: EvidenceRecord = _session.ledger.get_record(outcome.id)
+	if record != null:
+		for event_id: String in record.event_ids:
+			var event: EventRecord = _session.store.get_event(event_id)
+			if event != null:
+				result.lines.append("  %s  %s  %s  %s  %s" % [event.display_id, EventRecord.clock_text(event.tick), event.actor, event.result, event.detail])
+	return result
+
+
+func _evidence_list() -> TerminalResult:
+	var result: TerminalResult = TerminalResult.new()
+	if _session.ledger.size() == 0:
+		result.lines.append("No evidence collected yet. Find events with logs search, then: evidence add <event>")
+		return result
+	for record: EvidenceRecord in _session.ledger.all():
+		var shown: PackedStringArray = PackedStringArray()
+		for event_id: String in record.event_ids:
+			var event: EventRecord = _session.store.get_event(event_id)
+			shown.append(event.display_id if event != null else event_id)
+		var line: String = "%s  %s" % [record.id, ", ".join(shown)]
+		if not record.note.is_empty():
+			line += "  - " + record.note
+		result.lines.append(line)
+	result.lines.append("%d pieces of evidence." % _session.ledger.size())
+	return result
+
+
+func _evidence_remove(evidence_id: String) -> TerminalResult:
+	if not _is_plain_word(evidence_id):
+		return _bad("That is not an evidence id. They look like ev_001; evidence list shows them.")
+	var outcome: ActionResult = _session.remove_evidence(evidence_id)
+	if not outcome.ok:
+		return _bad(outcome.message)
+	return _say(outcome.message)
+
+
+func _case_note(positional: PackedStringArray, options: Dictionary) -> TerminalResult:
+	if not _is_case_id(positional[0]):
+		return _bad("There is one case in this lab: %s." % CaseFile.CASE_ID)
+	var references: PackedStringArray = PackedStringArray()
+	if options.has("evidence"):
+		for part: String in String(options["evidence"]).split(",", false):
+			if not _is_plain_word(part):
+				return _bad("evidence= must be evidence ids separated by commas, like evidence=ev_001,ev_002.")
+			references.append(part)
+	var outcome: ActionResult = _session.add_case_entry(String(options.get("kind", "hypothesis")).to_lower(), positional[1], references)
+	if not outcome.ok:
+		return _bad(outcome.message)
+	return _say(outcome.message)
+
+
+func _case_severity(level: String) -> TerminalResult:
+	if not _is_plain_word(level):
+		return _bad("Severity must be one of: low, medium, high, critical.")
+	var outcome: ActionResult = _session.set_severity(level)
+	if not outcome.ok:
+		return _bad(outcome.message)
+	return _say(outcome.message)
+
+
+func _case_scope(asset_list: String) -> TerminalResult:
+	var references: PackedStringArray = PackedStringArray()
+	for part: String in asset_list.split(",", false):
+		if not _is_plain_word(part):
+			return _bad("Name assets by id or name, separated by commas, like case scope host_014,member_portal.")
+		references.append(part)
+	var outcome: ActionResult = _session.set_scope(references)
+	if not outcome.ok:
+		return _bad(outcome.message)
+	return _say(outcome.message)
+
+
+func _case_show() -> TerminalResult:
+	var result: TerminalResult = TerminalResult.new()
+	var case_file: CaseFile = _session.case_file
+	result.lines.append(CaseFile.CASE_ID)
+	result.lines.append("Severity: %s" % ("not set" if case_file.severity == "unset" else case_file.severity))
+	result.lines.append("Scope: %s" % (", ".join(case_file.scope) if not case_file.scope.is_empty() else "not set"))
+	var entries: Array[CaseEntry] = case_file.entries()
+	if entries.is_empty():
+		result.lines.append("No entries yet. Add one with: case note CASE-001 \"text\"")
+	for entry: CaseEntry in entries:
+		var line: String = "[%s] %s  %s" % [entry.kind.to_upper(), entry.id, entry.text]
+		if not entry.evidence_ids.is_empty():
+			line += "  (%s)" % ", ".join(entry.evidence_ids)
+		result.lines.append(line)
+	result.lines.append("Evidence collected: %d" % _session.ledger.size())
+	return result
+
+
+func _timeline_build(positional: PackedStringArray) -> TerminalResult:
+	if positional.size() == 1 and not _is_case_id(positional[0]):
+		return _bad("There is one case in this lab: %s." % CaseFile.CASE_ID)
+	var items: Array[Dictionary] = _session.build_timeline()
+	var result: TerminalResult = TerminalResult.new()
+	if items.is_empty():
+		result.lines.append("No evidence collected yet, so there is nothing to show. Use: evidence add <event>")
+		return result
+	for item: Dictionary in items:
+		result.lines.append("%s  +%s  %s  %s  %s  %s  %s" % [str(item["time"]), str(item["minutes_since_first"]).rpad(3), str(item["display_id"]).rpad(9), str(item["actor"]).rpad(10), str(item["result"]).rpad(9), str(item["detail"]), "(%s)" % ", ".join(item["evidence_ids"])])
+	result.lines.append("%d events on the timeline." % items.size())
+	return result
+
+
 # --- helpers ----------------------------------------------------------------
+
+static func _bad(message: String) -> TerminalResult:
+	return TerminalResult.failure(TerminalResult.Code.BAD_ARGUMENT, message)
+
+
+static func _say(message: String) -> TerminalResult:
+	var result: TerminalResult = TerminalResult.new()
+	result.lines.append(message)
+	return result
+
+
+static func _is_case_id(text: String) -> bool:
+	return text.to_upper() == CaseFile.CASE_ID
 
 static func _compare(field: String, comparison: String, value: String) -> Dictionary:
 	return {"op": "cmp", "field": field, "cmp": comparison, "value": value}

@@ -35,6 +35,13 @@ func get_event(id: String) -> EventRecord:
 	return _index.get(id)
 
 
+## Turns what a player typed ("EVT-004", "evt_004") into an internal id, or ""
+## if no such event exists.
+func resolve_id(reference: String) -> String:
+	var candidate: String = reference.strip_edges().to_lower().replace("-", "_")
+	return candidate if _index.has(candidate) else ""
+
+
 func size() -> int:
 	return _events.size()
 

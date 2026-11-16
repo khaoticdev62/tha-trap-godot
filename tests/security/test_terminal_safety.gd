@@ -130,3 +130,46 @@ func test_terminal_has_no_path_or_execution_surface() -> void:
 		check(not TerminalParser._is_plain_word(text), "not a plain word: %s" % text.c_escape())
 	for text: String in ["HOST-014", "j.smith", "evt_001", "ext-203-0-113-45", "a:b"]:
 		check(TerminalParser._is_plain_word(text), "plain word: %s" % text)
+
+
+func test_random_case_building_never_corrupts_the_lab() -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = 5150
+	var events: Array[String] = ["EVT-001", "EVT-002", "EVT-003", "EVT-004", "EVT-005", "EVT-006", "EVT-007", "evt_n0001", "EVT-999", "$x", "..", "", "EVT-001,EVT-002"]
+	var evidence_ids: Array[String] = ["ev_001", "ev_002", "ev_003", "ev_004", "ev_005", "ev_006", "ev_404", "ev_x", "EV_001"]
+	var kinds: Array[String] = ["fact", "hypothesis", "unknown", "FACT", "bad", ""]
+	var texts: Array[String] = ["A short note", "Two failures then a success", "x".repeat(300), "x".repeat(301), "$(whoami)", "Café 🙂", "a\\\"b"]
+	var levels: Array[String] = ["low", "medium", "high", "critical", "unset", "urgent", ""]
+	var assets: Array[String] = ["host_014", "HOST-022", "member_portal,sso_main", "host_999", "a/b", "host_014,host_014"]
+	var started: int = Time.get_ticks_msec()
+	for _i: int in 3000:
+		var line: String = ""
+		match rng.randi_range(0, 8):
+			0:
+				line = "evidence add %s" % events[rng.randi_range(0, events.size() - 1)]
+			1:
+				line = "evidence add %s note=\"%s\"" % [events[rng.randi_range(0, events.size() - 1)], texts[rng.randi_range(0, texts.size() - 1)]]
+			2:
+				line = "evidence remove %s" % evidence_ids[rng.randi_range(0, evidence_ids.size() - 1)]
+			3, 4:
+				line = "case note CASE-001 \"%s\" kind=%s evidence=%s" % [texts[rng.randi_range(0, texts.size() - 1)], kinds[rng.randi_range(0, kinds.size() - 1)], evidence_ids[rng.randi_range(0, evidence_ids.size() - 1)]]
+			5:
+				line = "case severity %s" % levels[rng.randi_range(0, levels.size() - 1)]
+			6:
+				line = "case scope %s" % assets[rng.randi_range(0, assets.size() - 1)]
+			7:
+				line = "timeline build"
+			8:
+				line = "case show"
+		var result: TerminalResult = _terminal.run(line)
+		check(result != null and result.lines.size() <= MAX_LINES, "bounded output for: %s" % line.left(60).c_escape())
+		var problems: PackedStringArray = _session.state_problems()
+		check(problems.is_empty(), "the lab stays consistent after '%s': %s" % [line.left(60).c_escape(), str(problems)])
+		if not problems.is_empty():
+			return
+	var copy: LabSession = LabSession.new(_session.package, _session.difficulty, _session.seed_value)
+	var restored: ActionResult = copy.restore(JSON.parse_string(JSON.stringify(_session.snapshot())))
+	check(restored.ok, "whatever the fuzz built can be saved and loaded again: %s" % restored.message)
+	check_eq(copy.state_hash(), _session.state_hash(), "with an identical state")
+	check(_session.ledger.size() > 0 and _session.case_file.entries().size() > 0, "the fuzz really built something (%d evidence, %d entries)" % [_session.ledger.size(), _session.case_file.entries().size()])
+	check(Time.get_ticks_msec() - started < 30000, "finished within the time budget")
