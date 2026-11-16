@@ -24,6 +24,10 @@ if ($Filter) { $extra = @("--", $Filter) }
 & $godot --headless --path $project -s tests/run_tests.gd @extra
 $unitExit = $LASTEXITCODE
 
+# Content: every registered data document must validate.
+& $godot --headless --path $project -s tools/content_validator/validate.gd
+$contentExit = $LASTEXITCODE
+
 # Integration: each scene boots the real autoloads and drives the UI.
 $integrationFailed = $false
 foreach ($scene in Get-ChildItem (Join-Path $project "tests/integration/*.tscn") | Sort-Object Name) {
@@ -39,5 +43,5 @@ foreach ($scene in Get-ChildItem (Join-Path $project "tests/integration/*.tscn")
     }
 }
 
-if ($unitExit -ne 0 -or $integrationFailed) { exit 1 }
+if ($unitExit -ne 0 -or $contentExit -ne 0 -or $integrationFailed) { exit 1 }
 exit 0

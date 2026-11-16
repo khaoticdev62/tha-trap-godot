@@ -1,0 +1,25 @@
+{
+	"schema_version": 1,
+	"id": "lab_001",
+	"display_id": "LAB-001",
+	"aliases": ["LAB-MR-001"],
+	"version": "1.0.0",
+	"title": "Somebody's In The Network",
+	"district": "market_row",
+	"difficulty": "adaptive",
+	"estimated_minutes": 25,
+	"prerequisites": ["identity_basics", "log_basics"],
+	"objectives": [
+		"Parse authentication events.",
+		"Compare normal and unusual sign-in patterns.",
+		"Build a timeline with event IDs.",
+		"Distinguish indicator from conclusion.",
+		"Recommend proportional next steps."
+	],
+	"scenario_data": "labs/lab_001",
+	"allowed_actions": ["search_logs", "inspect_identity", "add_evidence", "write_report"],
+	"forbidden_actions": ["host_shell", "external_network", "real_credentials"],
+	"framework_mappings": [],
+	"reset_policy": "full_reset",
+	"portfolio_artifact": "incident_triage_report"
+}

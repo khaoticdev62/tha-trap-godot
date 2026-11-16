@@ -5,6 +5,7 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- Content validator CLI (`tools/content_validator/validate.gd`; exits 1 on any problem; runs in `run-tests.ps1` and CI), `ContentCatalog` with the LAB-001 manifest schema and `data/labs/lab_001/manifest.json`. Registry entries can carry an extra check; the lab check requires every manifest to forbid `host_shell`, `external_network` and `real_credentials` and never allow a forbidden action. Manifest paths to the scenario, rubric and events are not yet checked for existence (those files arrive in M2/M6).
 - `ContentRegistry` and `ContentLoader` (`scripts/data/`): content is loaded by registered id only (never a caller path), with a per-file size cap, malformed-JSON errors that carry a line number, a required `schema_version` (newer versions refused), schema validation, and `validate_all()` that reports every bad document together. Schemas live in code for now rather than `data/schema/*.json`; revisit when more than one lab exists.
 - `SchemaValidator` and `ContentResult` (`scripts/data/`): declarative validation for untrusted content (types, ranges, enums, stable ids, text safety incl. control/zero-width/bidi characters, nesting cap, error cap, safe relative content paths, duplicate-id finder). First piece of milestone M1; no content or loader yet.
 - Phase 1 audit documents (`docs/audits`, `docs/architecture`, `docs/production`) and the production specs under version control in `docs/spec/` (decisions D-008 to D-013 recorded in `00`).

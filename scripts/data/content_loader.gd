@@ -63,6 +63,13 @@ func load_content(id: String) -> ContentResult:
 		for message: String in checked.errors:
 			result.add(id, message)
 		return result
+	var check: Callable = entry["check"]
+	if check.is_valid():
+		var problems: PackedStringArray = check.call(document)
+		if not problems.is_empty():
+			for message: String in problems:
+				result.add(id, message)
+			return result
 	result.data = document
 	return result
 

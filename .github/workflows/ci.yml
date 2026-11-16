@@ -35,6 +35,10 @@ jobs:
         run: |
           "$RUNNER_TEMP/godot" --headless --path . -s tests/run_tests.gd
 
+      - name: Content validation
+        run: |
+          "$RUNNER_TEMP/godot" --headless --path . -s tools/content_validator/validate.gd
+
       - name: Integration tests
         run: |
           for scene in tests/integration/*.tscn; do
