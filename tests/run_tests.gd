@@ -1,10 +1,10 @@
 extends SceneTree
 ## Headless test runner.
 ##   godot --headless --path . -s tests/run_tests.gd [-- <name-filter>]
-## Discovers tests/unit/test_*.gd, runs every `test_*` method, and exits 1 on
+## Discovers test_*.gd in tests/unit and tests/security, runs every `test_*` method, and exits 1 on
 ## any failure so CI can gate on it.
 
-const TEST_DIR: String = "res://tests/unit"
+const TEST_DIRS: Array[String] = ["res://tests/unit", "res://tests/security"]
 
 
 func _init() -> void:
@@ -20,7 +20,7 @@ func _init() -> void:
 	for file_name: String in _discover():
 		if not filter.is_empty() and not file_name.contains(filter):
 			continue
-		var script: GDScript = load(TEST_DIR.path_join(file_name))
+		var script: GDScript = load(file_name)
 		if script == null or not script.can_instantiate():
 			failed.append("%s: failed to compile" % file_name)
 			continue
@@ -49,11 +49,12 @@ func _init() -> void:
 
 func _discover() -> PackedStringArray:
 	var found: PackedStringArray = PackedStringArray()
-	var dir: DirAccess = DirAccess.open(TEST_DIR)
-	if dir == null:
-		return found
-	for file_name: String in dir.get_files():
-		if file_name.begins_with("test_") and file_name.ends_with(".gd"):
-			found.append(file_name)
+	for test_dir: String in TEST_DIRS:
+		var dir: DirAccess = DirAccess.open(test_dir)
+		if dir == null:
+			continue
+		for file_name: String in dir.get_files():
+			if file_name.begins_with("test_") and file_name.ends_with(".gd"):
+				found.append(test_dir.path_join(file_name))
 	found.sort()
 	return found

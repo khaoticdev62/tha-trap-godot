@@ -96,7 +96,7 @@ Rule: **content ids are stable lowercase strings** (`lab_001`, `evt_001`); displ
 All carry `id`, `schema_version`. Unknown keys are rejected by the validator in dev and ignored (logged) in release.
 
 ```
-EventRecord   { id, display_id, tick:int (seconds from scenario start), source:StringName(auth|mfa|app|helpdesk),
+EventRecord   { id, display_id, tick:int (seconds since midnight of the scenario day; 09:12 = 33120), source:StringName(auth|mfa|app|helpdesk),
                 actor:String, result:StringName, ip_label:String (synthetic label e.g. "ext-203-0-113-x"),
                 device:String, detail:String, tags:PackedStringArray, canonical:bool }
 Asset         { id, kind, name, owner, notes }

@@ -1,0 +1,33 @@
+{
+	"schema_version": 1,
+	"id": "lab_001_scenario",
+	"events": [
+		{"id": "evt_001", "display_id": "EVT-001", "tick": 33120, "source": "auth", "actor": "j.smith", "result": "failure", "ip_label": "ext-203-0-113-45", "device": "browser-unknown", "detail": "Sign-in failed: incorrect password.", "tags": ["credential_failure"], "canonical": true},
+		{"id": "evt_002", "display_id": "EVT-002", "tick": 33180, "source": "auth", "actor": "j.smith", "result": "failure", "ip_label": "ext-203-0-113-45", "device": "browser-unknown", "detail": "Sign-in failed: incorrect password.", "tags": ["credential_failure"], "canonical": true},
+		{"id": "evt_003", "display_id": "EVT-003", "tick": 33360, "source": "auth", "actor": "j.smith", "result": "success", "ip_label": "ext-203-0-113-45", "device": "browser-unknown", "detail": "Sign-in succeeded.", "tags": ["new_source"], "canonical": true},
+		{"id": "evt_004", "display_id": "EVT-004", "tick": 33540, "source": "mfa", "actor": "j.smith", "result": "requested", "ip_label": "ext-203-0-113-45", "device": "browser-unknown", "detail": "New MFA device enrollment requested.", "tags": ["mfa_change"], "canonical": true},
+		{"id": "evt_005", "display_id": "EVT-005", "tick": 33840, "source": "app", "actor": "j.smith", "result": "success", "ip_label": "ext-203-0-113-45", "device": "browser-unknown", "detail": "Member support portal accessed.", "tags": ["member_data"], "canonical": true},
+		{"id": "evt_006", "display_id": "EVT-006", "tick": 34800, "source": "helpdesk", "actor": "j.smith", "result": "reported", "ip_label": "n/a", "device": "n/a", "detail": "Help-desk ticket: employee reports no recent sign-in today.", "tags": ["user_report"], "canonical": true},
+		{"id": "evt_007", "display_id": "EVT-007", "tick": 30660, "source": "auth", "actor": "j.smith", "result": "success", "ip_label": "int-10-20-0-12", "device": "HOST-014", "detail": "Sign-in succeeded.", "tags": ["baseline"], "canonical": false},
+		{"id": "evt_008", "display_id": "EVT-008", "tick": 31440, "source": "auth", "actor": "r.alvarez", "result": "success", "ip_label": "int-10-20-0-31", "device": "HOST-022", "detail": "Sign-in succeeded.", "tags": ["baseline"], "canonical": false}
+	],
+	"assets": [
+		{"id": "host_014", "kind": "workstation", "name": "HOST-014", "owner": "j.smith", "notes": "Front-desk workstation assigned to J. Smith."},
+		{"id": "host_022", "kind": "workstation", "name": "HOST-022", "owner": "r.alvarez", "notes": "Loan-desk workstation assigned to R. Alvarez."},
+		{"id": "member_portal", "kind": "portal", "name": "Member support portal", "owner": "support_team", "notes": "Staff-facing tool for member account support. Holds member contact and account details."},
+		{"id": "sso_main", "kind": "identity_provider", "name": "Credit union single sign-on", "owner": "it_team", "notes": "Handles staff sign-in and MFA enrollment."}
+	],
+	"identities": [
+		{"id": "id_j_smith", "account": "j.smith", "display_name": "J. Smith", "role": "Member services representative", "normal_start_tick": 30000, "normal_end_tick": 61200, "normal_sources": ["int-10-20-0-12"], "normal_device": "HOST-014"},
+		{"id": "id_r_alvarez", "account": "r.alvarez", "display_name": "R. Alvarez", "role": "Loan officer", "normal_start_tick": 30600, "normal_end_tick": 61200, "normal_sources": ["int-10-20-0-31"], "normal_device": "HOST-022"}
+	],
+	"noise": {
+		"accounts": ["t.nguyen", "d.okafor", "k.patel", "l.washington", "a.romero"],
+		"sources": ["int-10-20-0-41", "int-10-20-0-42", "int-10-20-0-43", "int-10-20-0-44", "int-10-20-0-45"],
+		"devices": ["HOST-031", "HOST-032", "HOST-033", "HOST-034", "HOST-035"],
+		"day_start_tick": 28800,
+		"day_end_tick": 64800,
+		"counts": {"beginner": 4, "standard": 16, "advanced": 48, "expert": 96},
+		"decoys": {"beginner": 0, "standard": 0, "advanced": 3, "expert": 6}
+	}
+}
