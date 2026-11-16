@@ -5,6 +5,7 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- `SchemaValidator` and `ContentResult` (`scripts/data/`): declarative validation for untrusted content (types, ranges, enums, stable ids, text safety incl. control/zero-width/bidi characters, nesting cap, error cap, safe relative content paths, duplicate-id finder). First piece of milestone M1; no content or loader yet.
 - Phase 1 audit documents (`docs/audits`, `docs/architecture`, `docs/production`) and the production specs under version control in `docs/spec/` (decisions D-008 to D-013 recorded in `00`).
 - Local pre-push test gate (`tools/hooks/pre-push`, `tools/install-hooks.ps1`) as a stand-in for CI.
 - Credential-free export presets for Windows and Linux x86_64 (`export_presets.cfg`, no longer git-ignored; verified to load and pack resources with Godot 4.7.2; full export needs export templates, not yet tested).
