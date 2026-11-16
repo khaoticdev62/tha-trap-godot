@@ -1,0 +1,33 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+
+config_version=5
+
+[application]
+
+config/name="THA T.R.A.P."
+config/description="Threat Response And Protection: a story-driven cybersecurity career RPG."
+run/main_scene="res://scenes/boot/boot.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+EventBus="*res://scripts/core/event_bus.gd"
+Diagnostics="*res://scripts/core/diagnostics_service.gd"
+Saves="*res://scripts/save/save_service.gd"
+Profiles="*res://scripts/core/profile_service.gd"
+Scenes="*res://scripts/core/scene_flow.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=800
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0

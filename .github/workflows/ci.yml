@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Godot and verify checksum
+        run: |
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          curl -fsSL -o godot.zip "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -fsSL -o sums.txt "$base/SHA512-SUMS.txt"
+          grep "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" sums.txt | sed 's/ .*/  godot.zip/' | sha512sum -c -
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot"
+
+      - name: Import project
+        run: |
+          "$RUNNER_TEMP/godot" --headless --path . --import --quit
+
+      - name: Unit tests
+        run: |
+          "$RUNNER_TEMP/godot" --headless --path . -s tests/run_tests.gd
+
+      - name: Integration tests
+        run: |
+          "$RUNNER_TEMP/godot" --headless --path . res://tests/integration/title_flow.tscn

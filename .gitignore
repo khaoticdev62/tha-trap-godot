@@ -1,0 +1,25 @@
+# Godot
+.godot/
+.import/
+*.translation
+export_presets.cfg
+export_credentials.cfg
+
+# Builds
+builds/
+*.exe
+*.pck
+*.zip
+
+# Local tooling and secrets
+.env
+.env.*
+*.key
+*.pem
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
