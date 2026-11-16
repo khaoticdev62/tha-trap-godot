@@ -34,14 +34,12 @@ var _active: bool = false
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	offset_left = PANEL_MARGIN
-	offset_right = -PANEL_MARGIN
-	offset_bottom = -PANEL_MARGIN
-	grow_vertical = Control.GROW_DIRECTION_BEGIN
 	visible = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
+	# Pinned to the bottom edge; the panel is as tall as its content and grows upward.
+	set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE, Control.PRESET_MODE_MINSIZE, int(PANEL_MARGIN))
+	grow_vertical = Control.GROW_DIRECTION_BEGIN
 
 
 func _process(delta: float) -> void:

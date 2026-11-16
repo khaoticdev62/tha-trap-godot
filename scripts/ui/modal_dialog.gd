@@ -37,7 +37,7 @@ static func open(host: Node, title: String, body: String, confirm_text: String, 
 
 func _ready() -> void:
 	_previous_focus = get_viewport().gui_get_focus_owner()
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
 	cancel_button.grab_focus()
@@ -52,12 +52,12 @@ func _input(event: InputEvent) -> void:
 func _build() -> void:
 	var dim: ColorRect = ColorRect.new()
 	dim.color = DIM_COLOR
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
 
 	var center: CenterContainer = CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
 

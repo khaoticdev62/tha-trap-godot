@@ -84,3 +84,46 @@ func test_type_variations_inherit_from_label() -> void:
 	var theme: Theme = UiTheme.build(AccessibilitySettings.new())
 	for variation: StringName in [&"TitleLabel", &"HeadingLabel", &"MutedLabel"]:
 		check_eq(theme.get_type_variation_base(variation), &"Label", "%s extends Label" % variation)
+
+
+func test_slider_track_and_fill_are_defined_and_distinct() -> void:
+	for high_contrast: bool in [false, true]:
+		var settings: AccessibilitySettings = AccessibilitySettings.new()
+		settings.high_contrast = high_contrast
+		var theme: Theme = UiTheme.build(settings)
+		for part: StringName in [&"slider", &"grabber_area"]:
+			check(theme.has_stylebox(part, "HSlider"), "%s defined (hc=%s)" % [part, high_contrast])
+		var track: StyleBoxFlat = theme.get_stylebox("slider", "HSlider")
+		var fill: StyleBoxFlat = theme.get_stylebox("grabber_area", "HSlider")
+		check(track.bg_color != fill.bg_color, "filled part differs from the track (hc=%s)" % high_contrast)
+		check(UiTheme.contrast_ratio(fill.bg_color, track.bg_color) >= NON_TEXT, "fill vs track contrast >= 3:1 (hc=%s)" % high_contrast)
+		check(UiTheme.contrast_ratio(track.border_color, Palette.OBSIDIAN if not high_contrast else UiTheme.HC_BACKGROUND) >= NON_TEXT, "track outline visible against the page (hc=%s)" % high_contrast)
+
+
+func test_text_field_is_readable_and_shows_focus() -> void:
+	for high_contrast: bool in [false, true]:
+		var settings: AccessibilitySettings = AccessibilitySettings.new()
+		settings.high_contrast = high_contrast
+		var theme: Theme = UiTheme.build(settings)
+		var box: StyleBoxFlat = theme.get_stylebox("normal", "LineEdit")
+		check(UiTheme.contrast_ratio(theme.get_color("font_color", "LineEdit"), box.bg_color) >= AAA, "typed text readable (hc=%s)" % high_contrast)
+		check(UiTheme.contrast_ratio(theme.get_color("font_placeholder_color", "LineEdit"), box.bg_color) >= AA, "placeholder readable (hc=%s)" % high_contrast)
+		check(theme.get_stylebox("focus", "LineEdit").border_width_left >= UiTheme.FOCUS_BORDER_WIDTH, "focus ring (hc=%s)" % high_contrast)
+
+
+func test_dropdown_popup_text_is_readable_in_both_states() -> void:
+	for high_contrast: bool in [false, true]:
+		var settings: AccessibilitySettings = AccessibilitySettings.new()
+		settings.high_contrast = high_contrast
+		var theme: Theme = UiTheme.build(settings)
+		var panel: StyleBoxFlat = theme.get_stylebox("panel", "PopupMenu")
+		var hover: StyleBoxFlat = theme.get_stylebox("hover", "PopupMenu")
+		check(UiTheme.contrast_ratio(theme.get_color("font_color", "PopupMenu"), panel.bg_color) >= AAA, "item text (hc=%s)" % high_contrast)
+		check(UiTheme.contrast_ratio(theme.get_color("font_hover_color", "PopupMenu"), hover.bg_color) >= AAA, "hovered item text (hc=%s)" % high_contrast)
+
+
+func test_page_background_follows_the_colour_scheme() -> void:
+	var settings: AccessibilitySettings = AccessibilitySettings.new()
+	check_eq(UiTheme.background_color(settings), Palette.OBSIDIAN, "standard background is Obsidian")
+	settings.high_contrast = true
+	check_eq(UiTheme.background_color(settings), UiTheme.HC_BACKGROUND, "high contrast background is black")

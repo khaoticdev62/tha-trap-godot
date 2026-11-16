@@ -6,6 +6,7 @@ extends Control
 
 const PRIMARY_SLOT: int = 0
 const BUTTON_WIDTH: float = 420.0
+const SCREEN_MARGIN: int = 32
 
 var _save: SaveService
 var _profile: ProfileService
@@ -24,15 +25,24 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	var background: ColorRect = ColorRect.new()
-	background.color = Palette.OBSIDIAN
-	background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(background)
+	add_child(PageBackground.new())
+
+	# Scrollable with margins so every control stays reachable at large text sizes.
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	add_child(scroll)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, SCREEN_MARGIN)
+	scroll.add_child(margin)
 
 	var center: CenterContainer = CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	margin.add_child(center)
 
 	var column: VBoxContainer = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 16)

@@ -7,6 +7,7 @@ extends Control
 const PRIMARY_SLOT: int = 0
 const FORM_WIDTH: float = 640.0
 const SWATCH_SIZE: Vector2 = Vector2(48, 48)
+const SCREEN_MARGIN: int = 32
 
 var _profiles: ProfileService
 var _saves: SaveService
@@ -36,22 +37,23 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build_ui() -> void:
-	var background: ColorRect = ColorRect.new()
-	background.color = Palette.OBSIDIAN
-	background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(background)
+	add_child(PageBackground.new())
 
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.follow_focus = true
 	add_child(scroll)
 
+	var margin: MarginContainer = MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, SCREEN_MARGIN)
+	scroll.add_child(margin)
+
 	var outer: CenterContainer = CenterContainer.new()
-	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.add_child(outer)
+	margin.add_child(outer)
 
 	var column: VBoxContainer = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)

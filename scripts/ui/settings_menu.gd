@@ -3,6 +3,9 @@ extends Control
 ## Changes apply immediately (live preview) and persist through SettingsService.
 ## Fully operable with keyboard or controller; ui_cancel goes back.
 
+const SCREEN_MARGIN: int = 32
+const FORM_WIDTH: float = 720.0
+
 var _settings: SettingsService
 var _syncing: bool = false
 
@@ -30,20 +33,30 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build_ui() -> void:
-	var background: ColorRect = ColorRect.new()
-	background.color = Palette.OBSIDIAN
-	background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(background)
+	add_child(PageBackground.new())
 	_settings.changed.connect(_on_settings_changed)
 
+	# Scrollable so the form stays reachable at large text sizes and on short
+	# screens; margins keep it off the screen edges.
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	add_child(scroll)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, SCREEN_MARGIN)
+	scroll.add_child(margin)
+
 	var center: CenterContainer = CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	margin.add_child(center)
 
 	var column: VBoxContainer = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 16)
-	column.custom_minimum_size = Vector2(720, 0)
+	column.custom_minimum_size = Vector2(FORM_WIDTH, 0)
 	center.add_child(column)
 
 	column.add_child(_label("Settings", &"HeadingLabel"))
@@ -128,8 +141,18 @@ func _check(text: String, description: String) -> CheckButton:
 	check.custom_minimum_size = Vector2(420, UiTheme.MIN_TARGET_HEIGHT)
 	check.focus_mode = Control.FOCUS_ALL
 	_name_for_assistive_tech(check, text, description)
-	check.toggled.connect(func(_pressed: bool) -> void: _on_value_changed(0.0))
+	check.set_meta("base_text", text)
+	check.toggled.connect(func(pressed: bool) -> void:
+		_show_state(check, pressed)
+		_on_value_changed(0.0))
+	_show_state(check, false)
 	return check
+
+
+## State is written in the label ("On"/"Off") so it never depends on the small
+## switch icon or on colour.
+func _show_state(check: CheckButton, pressed: bool) -> void:
+	check.text = "%s: %s" % [check.get_meta("base_text"), "On" if pressed else "Off"]
 
 
 ## Sets screen-reader name/description when the engine exposes them.
@@ -146,6 +169,8 @@ func _sync_controls() -> void:
 	_scale_slider.value = current.text_scale
 	_motion_check.button_pressed = current.reduced_motion
 	_contrast_check.button_pressed = current.high_contrast
+	_show_state(_motion_check, current.reduced_motion)
+	_show_state(_contrast_check, current.high_contrast)
 	_speed_choice.select(_speed_index(current.text_speed))
 	_scale_value.text = "%d%%" % roundi(current.text_scale * 100.0)
 	_syncing = false

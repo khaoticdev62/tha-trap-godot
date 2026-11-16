@@ -13,6 +13,8 @@ godot --path .                      # play (opens the title screen)
 tools\run-tests.ps1                 # unit + integration tests (headless)
 tools\run-tests.ps1 save_service    # only test files whose name contains the filter
 ```
+Headless runs draw nothing, so UI changes need eyes: `godot --path . res://tools/visual/capture.tscn -- --out=<dir>` opens a real window and saves PNGs of every screen at 1280x800, 1280x720, 200% text and high contrast. Look at them before calling UI work done.
+
 `tools/run-tests.ps1` finds Godot via `$env:GODOT`, then `PATH`, then `~\tools\godot`.
 
 ## Layout
@@ -24,7 +26,7 @@ scripts/ui/        Palette tokens, UiTheme, ModalDialog, DialogueBox, Typewriter
 scenes/            boot/, menus/
 tests/unit/        headless unit tests (test_*.gd, extend TestCase)
 tests/integration/ scene-driven checks that need the real autoloads
-tools/             run-tests.ps1
+tools/             run-tests.ps1, visual/capture.* (screenshot tool)
 ```
 
 ## Architecture notes

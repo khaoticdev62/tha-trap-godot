@@ -13,6 +13,7 @@ const MUTED_FONT_SIZE: int = 22
 
 const BORDER_WIDTH: int = 2
 const PRESSED_BORDER_WIDTH: int = 4
+const SLIDER_TRACK_HALF_HEIGHT: int = 6
 ## Focus ring is deliberately much thicker than the resting border, so focus is
 ## readable by shape and not by colour alone.
 const FOCUS_BORDER_WIDTH: int = 5
@@ -40,8 +41,15 @@ static func build(settings: AccessibilitySettings) -> Theme:
 	_style_buttons(theme, scheme, scale, "Button")
 	_style_buttons(theme, scheme, scale, "CheckButton")
 	_style_slider(theme, scheme)
+	_style_line_edit(theme, scheme, scale)
+	_style_popup(theme, scheme, scale)
 	_style_panel(theme, scheme)
 	return theme
+
+
+## Page background colour for the active scheme.
+static func background_color(settings: AccessibilitySettings) -> Color:
+	return _scheme(settings.high_contrast)["background"]
 
 
 static func scaled(base: int, scale: float) -> int:
@@ -111,6 +119,42 @@ static func _style_buttons(theme: Theme, scheme: Dictionary, scale: float, type_
 
 static func _style_slider(theme: Theme, scheme: Dictionary) -> void:
 	theme.set_stylebox("focus", "HSlider", _focus_box(scheme["accent"]))
+	# A visible track (outlined) with an accent-filled portion up to the grabber.
+	var track: StyleBoxFlat = _box(scheme["hover"], scheme["border"], 1)
+	track.content_margin_left = 0
+	track.content_margin_right = 0
+	track.content_margin_top = SLIDER_TRACK_HALF_HEIGHT
+	track.content_margin_bottom = SLIDER_TRACK_HALF_HEIGHT
+	theme.set_stylebox("slider", "HSlider", track)
+	var filled: StyleBoxFlat = _box(scheme["accent"], scheme["accent"], 1)
+	filled.content_margin_left = 0
+	filled.content_margin_right = 0
+	filled.content_margin_top = SLIDER_TRACK_HALF_HEIGHT
+	filled.content_margin_bottom = SLIDER_TRACK_HALF_HEIGHT
+	theme.set_stylebox("grabber_area", "HSlider", filled)
+	theme.set_stylebox("grabber_area_highlight", "HSlider", filled)
+
+
+static func _style_line_edit(theme: Theme, scheme: Dictionary, scale: float) -> void:
+	theme.set_font_size("font_size", "LineEdit", scaled(BASE_FONT_SIZE, scale))
+	theme.set_color("font_color", "LineEdit", scheme["text"])
+	theme.set_color("font_selected_color", "LineEdit", scheme["text"])
+	theme.set_color("font_placeholder_color", "LineEdit", scheme["muted"])
+	theme.set_color("caret_color", "LineEdit", scheme["accent"])
+	theme.set_color("selection_color", "LineEdit", scheme["pressed"])
+	theme.set_stylebox("normal", "LineEdit", _box(scheme["background"], scheme["border"], BORDER_WIDTH))
+	theme.set_stylebox("read_only", "LineEdit", _box(scheme["background"], scheme["muted"], 1))
+	theme.set_stylebox("focus", "LineEdit", _focus_box(scheme["accent"]))
+
+
+## Dropdown lists (OptionButton popups).
+static func _style_popup(theme: Theme, scheme: Dictionary, scale: float) -> void:
+	theme.set_font_size("font_size", "PopupMenu", scaled(BASE_FONT_SIZE, scale))
+	theme.set_color("font_color", "PopupMenu", scheme["text"])
+	theme.set_color("font_hover_color", "PopupMenu", scheme["text"])
+	theme.set_color("font_disabled_color", "PopupMenu", scheme["disabled_text"])
+	theme.set_stylebox("panel", "PopupMenu", _box(scheme["panel"], scheme["border"], BORDER_WIDTH))
+	theme.set_stylebox("hover", "PopupMenu", _box(scheme["hover"], scheme["accent"], BORDER_WIDTH))
 
 
 static func _style_panel(theme: Theme, scheme: Dictionary) -> void:
